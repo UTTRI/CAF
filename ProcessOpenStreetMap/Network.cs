@@ -118,11 +118,15 @@ internal sealed class Network
     public (float time, float distance) Compute(float originX, float originY, float destinationX, float destinationY)
     {
         // Find closest origin node in the network
-        int originNodeIndex = 0;
+        int originNodeIndex = FindClosestNodeIndex(originX, originY);
         // Find closest destination node in the network
-        int destinationNodeIndex = 0;
+        int destinationNodeIndex = FindClosestNodeIndex(destinationX, destinationY);
         // Find the fastest route between the two points
         var path = GetFastestPath(originNodeIndex, destinationNodeIndex);
+        if(path is null)
+        {
+            return (-1, -1);
+        }
         // Compute the travel time and distance for the fastest path
         var distance = 0.0f;
         var time = 0.0f;
@@ -145,12 +149,38 @@ internal sealed class Network
     }
 
     /// <summary>
+    /// Finds the closest node to the given coordinates.
+    /// </summary>
+    /// <param name="lat"></param>
+    /// <param name="lon"></param>
+    /// <returns>The index of the node that is the closest.</returns>
+    private int FindClosestNodeIndex(float lat, float lon)
+    {
+        int min = -1;
+        float minDistancce = float.PositiveInfinity;
+        for (int i = 0; i < _nodes.Count; i++)
+        {
+            var distance = ComputeDistance(lat, lon, _nodes[i].Lat, _nodes[i].Lon);
+            if(distance < minDistancce)
+            {
+                min = i;
+                minDistancce = distance;
+            }
+        }
+        if(min == -1)
+        {
+            Console.WriteLine("No node found!");
+        }
+        return min;
+    }
+
+    /// <summary>
     /// Thread-safe on a static network
     /// </summary>
     /// <param name="originNodeIndex"></param>
     /// <param name="destinationNodeIndex"></param>
     /// <returns></returns>
-    public List<(int origin, int destination)> GetFastestPath(int originNodeIndex, int destinationNodeIndex)
+    public List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex)
     {
         var fastestParent = new Dictionary<(int origin, int destination), (int parentOrigin, int parentDestination)>();
         MinHeap toExplore = new();
@@ -198,7 +228,7 @@ internal sealed class Network
                 }
             }
         }
-        throw new Exception("No Path found!");
+        return null;
     }
     private static List<(int origin, int destination)> GeneratePath(Dictionary<(int origin, int destination), (int parentOrigin, int parentDestination)> fastestParent,
             ((int origin, int destination) link, (int parentOrigin, int parentDestination) parentLink, float cost) current)

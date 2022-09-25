@@ -8,8 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Itinero" Version="1.5.1" />
-    <PackageReference Include="Itinero.IO.Osm" Version="1.5.1" />
     <PackageReference Include="OsmSharp" Version="6.2.0" />
   </ItemGroup>
 

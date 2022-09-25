@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using RTree;
 
 
 namespace ProcessOpenStreetMap;
@@ -6,6 +7,7 @@ namespace ProcessOpenStreetMap;
 internal sealed class Network
 {
     private readonly List<Node> _nodes;
+    private readonly RTree<int> _nodeLookup;
     public Network(string fileName)
     {
         var requestedFile = new FileInfo(fileName);
@@ -24,6 +26,13 @@ internal sealed class Network
             _nodes = OSMLoader.LoadOSMNetwork(fileName);
             Console.WriteLine("Network Loaded, storing cached version.");
             SaveCachedVersion(requestedFile);
+        }
+        Console.WriteLine("Building closest node R-Tree");
+        _nodeLookup = new RTree<int>();
+        for(int i = 0; i < _nodes.Count; i++)
+        {
+            var node = _nodes[i];
+            _nodeLookup.Add(new Rectangle(node.Lat, node.Lon, node.Lat, node.Lon, 0, 0), i);
         }
     }
 
@@ -156,22 +165,31 @@ internal sealed class Network
     /// <returns>The index of the node that is the closest.</returns>
     private int FindClosestNodeIndex(float lat, float lon)
     {
-        int min = -1;
-        float minDistancce = float.PositiveInfinity;
-        for (int i = 0; i < _nodes.Count; i++)
+        var closest = _nodeLookup.Nearest(new Point(lat, lon, 0), 100);
+        if (closest is not null && closest.Count > 0)
         {
-            var distance = ComputeDistance(lat, lon, _nodes[i].Lat, _nodes[i].Lon);
-            if(distance < minDistancce)
+            return closest[0];
+        }
+        else
+        {
+            // The backup strategy for finding the closest node
+            int min = -1;
+            float minDistancce = float.PositiveInfinity;
+            for (int i = 0; i < _nodes.Count; i++)
             {
-                min = i;
-                minDistancce = distance;
+                var distance = ComputeDistance(lat, lon, _nodes[i].Lat, _nodes[i].Lon);
+                if (distance < minDistancce)
+                {
+                    min = i;
+                    minDistancce = distance;
+                }
             }
+            if (min == -1)
+            {
+                Console.WriteLine("No node found!");
+            }
+            return min;
         }
-        if(min == -1)
-        {
-            Console.WriteLine("No node found!");
-        }
-        return min;
     }
 
     /// <summary>

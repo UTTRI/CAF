@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿#define PARALLEL
 
 using ProcessOpenStreetMap;
 using System.Diagnostics;
@@ -13,21 +13,28 @@ int processed = 0;
 int failedPaths = 0;
 Console.WriteLine("Starting to process entries.");
 var watch = Stopwatch.StartNew();
-//foreach(var entry in allEntries)
+#if PARALLEL
 Parallel.ForEach(allEntries, entry =>
+#else
+foreach (var entry in allEntries)
+#endif
 {
-    var results = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long);
-    Interlocked.Increment(ref processed);
-    if(results.time < 0)
+    var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long);
+    var p = Interlocked.Increment(ref processed);
+    if(time < 0)
     {
         Interlocked.Increment(ref failedPaths);
     }
-    if (processed % 100 == 0)
+    if (p % 100 == 0)
     {
-        var ts = TimeSpan.FromMilliseconds((watch.ElapsedMilliseconds / processed) * (allEntries.Length - processed));
+        var ts = TimeSpan.FromMilliseconds(((float)watch.ElapsedMilliseconds / p) * (allEntries.Length - p));
         Console.Write($"Processing {processed} of {allEntries.Length}, Estimated time remaining: " +
             $"{(ts.Days != 0 ? ts.Days + ":" : "")}{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}\r");
     }
-});
+}
+#if PARALLEL
+);
+#endif
+watch.Stop();
 Console.WriteLine($"\n{failedPaths} were unable to be computed.");
-Console.WriteLine();
+Console.WriteLine($"Total runtime for entries: {watch.ElapsedMilliseconds}ms");

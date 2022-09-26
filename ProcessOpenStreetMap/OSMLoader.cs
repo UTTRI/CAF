@@ -23,15 +23,15 @@ internal static class OSMLoader
             nodeLookup[(long)node.Id] = networkNodes.Count - 1;
         }
 
-        void StoreLink(long first, long second)
+        void StoreLink(long first, long second, HighwayType type)
         {
             var originIndex = nodeLookup[first];
             var origin = networkNodes[originIndex];
-            var destination = nodeLookup[second];
-            var travelTime = 0.0f;
-            origin.Connections.Add(new Link(originIndex, destination, travelTime));
+            var destinationIndex = nodeLookup[second];
+            var destination = networkNodes[destinationIndex];
+            var travelTime = Network.ComputeDistance(origin.Lat, origin.Lon, destination.Lat, destination.Lon);
+            origin.Connections.Add(new Link(originIndex, destinationIndex, travelTime));
         }
-
 
         HashSet<long> nodesInWays = new();
         using var stream = new OsmSharp.Streams.XmlOsmStreamSource(File.OpenRead(fileName));
@@ -39,13 +39,30 @@ internal static class OSMLoader
         Console.WriteLine("Searching OSM for all nodes that are connected in a way.");
         foreach (var entry in stream)
         {
-            if (entry.Type == OsmGeoType.Way && entry is Way x)
+            if (entry.Type == OsmGeoType.Way && entry is OsmSharp.Way way)
             {
-                foreach (var containedNode in x.Nodes)
+                HighwayType type = HighwayType.NotRoad;
+                if (way.Tags is not null)
                 {
-                    // It is fine to ignore if a node has been
-                    // already been added to skip
-                    _ = nodesInWays.Add(containedNode);
+                    foreach (var tag in way.Tags)
+                    {
+                        if (tag.Key is not null && tag.Value is not null)
+                        {
+                            if (tag.Key == "highway")
+                            {
+                                type = GetHighwayClass(tag.Value);
+                            }
+                        }
+                    }
+                }
+                if (type != HighwayType.NotRoad)
+                {
+                    foreach (var containedNode in way.Nodes)
+                    {
+                        // It is fine to ignore if a node has been
+                        // already been added to skip
+                        _ = nodesInWays.Add(containedNode);
+                    }
                 }
             }
         }
@@ -71,17 +88,62 @@ internal static class OSMLoader
             if (entry.Type == OsmGeoType.Way && entry is Way way)
             {
                 long prev = -1;
-                foreach(var node in way.Nodes)
+                HighwayType type = HighwayType.NotRoad; 
+                bool oneWay = false;
+                if (way.Tags is not null)
                 {
-                    if(prev >= 0)
+                    foreach (var tag in way.Tags)
                     {
-                        StoreLink(prev, node);
+                        if (tag.Key is not null && tag.Value is not null)
+                        {
+                            if (tag.Key == "highway")
+                            {
+                                type = GetHighwayClass(tag.Value);
+                            }
+                            if(tag.Key.Equals("oneway", StringComparison.InvariantCultureIgnoreCase)
+                                && tag.Value.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                oneWay = true;
+                            }
+                        }
                     }
-                    prev = node;
+                }
+                if (type != HighwayType.NotRoad)
+                {
+                    foreach (var node in way.Nodes)
+                    {
+                        if (prev >= 0)
+                        {
+                            StoreLink(prev, node, type);
+                            if (!oneWay)
+                            {
+                                StoreLink(node, prev, type);
+                            }
+                        }
+                        prev = node;
+                    }
                 }
             }
         }
         return networkNodes;
+    }
+
+    private static HighwayType GetHighwayClass(string value)
+    {
+        return value switch
+        {
+            "road" => HighwayType.Road,
+            "primary" => HighwayType.Primary,
+            "secondary" => HighwayType.Secondary,
+            "tertiary" => HighwayType.Tertiary,
+            "residential" => HighwayType.Residential,
+            "primary_link" => HighwayType.PrimaryLink,
+            "secondary_link" => HighwayType.SecondaryLink,
+            "tertiary_link" => HighwayType.TertiaryLink,
+            "motorway" => HighwayType.Motorway,
+            "motorway_link" => HighwayType.MotorwayLink,
+            _ => HighwayType.NotRoad
+        };
     }
 
     private static Node ConvertNode(OsmSharp.Node node)
@@ -99,4 +161,19 @@ internal static class OSMLoader
     {
         throw new Exception("We encountered a node with no id!");
     }
+}
+
+enum HighwayType
+{
+    NotRoad = 0,
+    Road,
+    Residential,
+    Tertiary,
+    Primary,
+    Secondary,
+    SecondaryLink,
+    MotorwayLink,
+    Motorway,
+    TertiaryLink,
+    PrimaryLink,
 }

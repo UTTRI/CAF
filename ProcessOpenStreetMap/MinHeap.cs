@@ -4,7 +4,7 @@ internal sealed class MinHeap
 {
     private readonly List<((int origin, int destination) link,
         (int parentOrigin, int parentDestination) parentLink, float cost)> _data
-        = new();
+        = new(50);
     private HashSet<(int origin, int destination)> _contained = new();
 
     public int Count => _data.Count;

@@ -29,7 +29,7 @@ internal sealed class Network
         }
         Console.WriteLine("Building closest node R-Tree");
         _nodeLookup = new RTree<int>();
-        for(int i = 0; i < _nodes.Count; i++)
+        for (int i = 0; i < _nodes.Count; i++)
         {
             var node = _nodes[i];
             _nodeLookup.Add(new Rectangle(node.Lat, node.Lon, node.Lat, node.Lon, 0, 0), i);
@@ -47,13 +47,14 @@ internal sealed class Network
     {
         using var reader = new BinaryReader(File.OpenRead(GetCachedName(requestedFile)));
         var magicNumber = reader.ReadInt64();
-        if(magicNumber != 6473891447)
+        if (magicNumber != 6473891447)
         {
             throw new Exception("Invalid Magic Number!");
         }
         var numberOfNodes = reader.ReadInt32();
         var numberOfLinks = new int[numberOfNodes];
         var ret = new List<Node>(numberOfNodes);
+        Console.WriteLine($"Number of nodes {numberOfNodes}");
         for (int i = 0; i < numberOfNodes; i++)
         {
             var lat = reader.ReadSingle();
@@ -61,15 +62,18 @@ internal sealed class Network
             numberOfLinks[i] = reader.ReadInt32();
             ret.Add(new Node(lat, lon, new List<Link>(numberOfLinks[i])));
         }
+        var linkSum = 0;
         for (int i = 0; i < numberOfNodes; i++)
         {
-            for(int j = 0; j < numberOfLinks[i]; j++)
+            for (int j = 0; j < numberOfLinks[i]; j++)
             {
+                linkSum++;
                 var destination = reader.ReadInt32();
                 var time = reader.ReadSingle();
-                ret[i].Connections.Add(new Link(i, j, time));
+                ret[i].Connections.Add(new Link(i, destination, time));
             }
         }
+        Console.WriteLine($"Number of links {linkSum}");
         return ret;
     }
 
@@ -79,20 +83,24 @@ internal sealed class Network
         // magic number
         writer.Write(6473891447L);
         writer.Write(_nodes.Count);
-        for(int i = 0; i < _nodes.Count; i++)
+        Console.WriteLine($"Number of nodes {_nodes.Count}");
+        for (int i = 0; i < _nodes.Count; i++)
         {
             writer.Write(_nodes[i].Lat);
             writer.Write(_nodes[i].Lon);
             writer.Write(_nodes[i].Connections.Count);
         }
+        int numberOfLinks = 0;
         for (int i = 0; i < _nodes.Count; i++)
         {
-            for(int j = 0; j < _nodes[i].Connections.Count; j++)
+            for (int j = 0; j < _nodes[i].Connections.Count; j++)
             {
+                numberOfLinks++;
                 writer.Write(_nodes[i].Connections[j].Destination);
                 writer.Write(_nodes[i].Connections[j].Time);
             }
         }
+        Console.WriteLine($"Number of links {numberOfLinks}");
     }
 
     /// <summary>
@@ -132,14 +140,14 @@ internal sealed class Network
         int destinationNodeIndex = FindClosestNodeIndex(destinationX, destinationY);
         // Find the fastest route between the two points
         var path = GetFastestPath(originNodeIndex, destinationNodeIndex);
-        if(path is null)
+        if (path is null)
         {
             return (-1, -1);
         }
         // Compute the travel time and distance for the fastest path
         var distance = 0.0f;
         var time = 0.0f;
-        for(int i = 0; i < path.Count; i++)
+        for (int i = 0; i < path.Count; i++)
         {
             var origin = _nodes[path[i].origin];
             int destinationIndex = path[i].destination;
@@ -200,6 +208,10 @@ internal sealed class Network
     /// <returns></returns>
     public List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex)
     {
+        if (originNodeIndex == destinationNodeIndex)
+        {
+            return new();
+        }
         var fastestParent = new Dictionary<(int origin, int destination), (int parentOrigin, int parentDestination)>();
         MinHeap toExplore = new();
         foreach (var link in _nodes[originNodeIndex].Connections)
@@ -229,19 +241,11 @@ internal sealed class Network
                 (int currentDestination, int childDestination) nextStep = (currentDestination, childDestination.Destination);
                 if (!fastestParent.ContainsKey(nextStep))
                 {
-                    // don't explore centroids that are not our destination
-                    if (childDestination.Destination != destinationNodeIndex)
+                    // make sure cars are allowed on the link
+                    var linkCost = childDestination.Time;
+                    if (linkCost >= 0)
                     {
-                        // ensure there is not a turn restriction
-                        //if (!_turnRestrictions.Contains((current.link.origin, currentDestination, childDestination)))
-                        {
-                            // make sure cars are allowed on the link
-                            var linkCost = childDestination.Time;
-                            if (linkCost >= 0)
-                            {
-                                toExplore.Push(nextStep, current.link, current.cost + linkCost);
-                            }
-                        }
+                        toExplore.Push(nextStep, current.link, current.cost + linkCost);
                     }
                 }
             }

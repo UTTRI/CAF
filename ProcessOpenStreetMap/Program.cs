@@ -16,7 +16,11 @@ Console.WriteLine("Starting to process entries.");
 var watch = Stopwatch.StartNew();
 #if PARALLEL
 Parallel.ForEach(allDevices,
-    device =>
+    ()=>
+    {
+        return new int[network.NodeCount];
+    },
+    (device, _, cache) =>
 #else
 foreach (var device in allDevices)
 #endif
@@ -25,7 +29,7 @@ foreach (var device in allDevices)
     {
         var startingPoint = device[i - 1];
         var entry = device[i];
-        var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long);        
+        var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long, cache);
         if (time < 0)
         {
             Interlocked.Increment(ref failedPaths);
@@ -38,8 +42,10 @@ foreach (var device in allDevices)
         Console.Write($"Processing {p} of {allDevices.Length}, Estimated time remaining: " +
             $"{(ts.Days != 0 ? ts.Days + ":" : "")}{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}\r");
     }
+    return cache;
 }
 #if PARALLEL
+, (cache) => { }
 );
 #endif
 watch.Stop();

@@ -36,6 +36,8 @@ internal sealed class Network
         }
     }
 
+    public int NodeCount => _nodes.Count;
+
     private bool HasCachedVersion(FileInfo requestedFile)
     {
         return File.Exists(GetCachedName(requestedFile));
@@ -132,16 +134,22 @@ internal sealed class Network
         return d;
     }
 
-    public (float time, float distance) Compute(float originX, float originY, float destinationX, float destinationY)
+    public (float time, float distance) Compute(float originX, float originY, float destinationX, float destinationY, int[] cache)
     {
         // Find closest origin node in the network
         int originNodeIndex = FindClosestNodeIndex(originX, originY);
         // Find closest destination node in the network
         int destinationNodeIndex = FindClosestNodeIndex(destinationX, destinationY);
+        if(originNodeIndex == destinationNodeIndex)
+        {
+            // we don't need to clear the cache if we don't use the fastest path algorithm.
+            return (-1, -1);
+        }
         // Find the fastest route between the two points
-        var path = GetFastestPath(originNodeIndex, destinationNodeIndex);
+        var path = GetFastestPath(originNodeIndex, destinationNodeIndex, cache);
         if (path is null)
         {
+            ClearCache(cache);
             return (-1, -1);
         }
         // Compute the travel time and distance for the fastest path
@@ -162,7 +170,13 @@ internal sealed class Network
                 }
             }
         }
+        ClearCache(cache);
         return (time, distance);
+    }
+
+    private void ClearCache(int[] cache)
+    {
+        Array.Fill(cache, -1);
     }
 
     /// <summary>
@@ -206,29 +220,30 @@ internal sealed class Network
     /// <param name="originNodeIndex"></param>
     /// <param name="destinationNodeIndex"></param>
     /// <returns></returns>
-    public List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex)
+    public List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex, int[] fastestParent)
     {
         if (originNodeIndex == destinationNodeIndex)
         {
             return new();
         }
-        var fastestParent = new Dictionary<(int origin, int destination), (int parentOrigin, int parentDestination)>();
         MinHeap toExplore = new();
+        fastestParent[originNodeIndex] = originNodeIndex;
         foreach (var link in _nodes[originNodeIndex].Connections)
         {
-            toExplore.Push((originNodeIndex, link.Destination), (-1, originNodeIndex), link.Time);
+            toExplore.Push(link.Destination, originNodeIndex, link.Time);
         }
         while (toExplore.Count > 0)
         {
             var current = toExplore.PopMin();
-            // don't explore things that we have already done                
-            if (!fastestParent.TryAdd(current.link, current.parentLink))
+            // don't explore things that we have already done
+            int currentDestination = current.Destination;
+            // if there was already a faster way to get here continue
+            if(fastestParent[currentDestination] != -1)
             {
-                // check to see if there are some turns that were restricted that need to be explored
                 continue;
             }
+            fastestParent[currentDestination] = current.Origin;
             // check to see if we have hit our destination
-            int currentDestination = current.link.destination;
             if (currentDestination == destinationNodeIndex)
             {
                 return GeneratePath(fastestParent, current);
@@ -238,45 +253,37 @@ internal sealed class Network
             foreach (var childDestination in links)
             {
                 // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
-                (int currentDestination, int childDestination) nextStep = (currentDestination, childDestination.Destination);
-                if (!fastestParent.ContainsKey(nextStep))
+                if (fastestParent[childDestination.Destination] == -1)
                 {
                     // make sure cars are allowed on the link
                     var linkCost = childDestination.Time;
                     if (linkCost >= 0)
                     {
-                        toExplore.Push(nextStep, current.link, current.cost + linkCost);
+                        toExplore.Push(childDestination.Destination, currentDestination, current.Cost + linkCost);
                     }
                 }
             }
         }
         return null;
     }
-    private static List<(int origin, int destination)> GeneratePath(Dictionary<(int origin, int destination), (int parentOrigin, int parentDestination)> fastestParent,
-            ((int origin, int destination) link, (int parentOrigin, int parentDestination) parentLink, float cost) current)
+    private static List<(int origin, int destination)> GeneratePath(int[] fastestParent,
+            (int Destination, int Origin, float cost) current)
     {
         // unwind the parents to build the path
         var ret = new List<(int, int)>();
-        var cIndex = current.parentLink;
-        ret.Add(current.link);
-        if (cIndex.parentOrigin >= 0)
+        var prev = current.Destination;
+        while(prev > 0)
         {
-            ret.Add(cIndex);
-            while (true)
+            var next = fastestParent[prev];
+            if (next != prev)
             {
-                if (fastestParent.TryGetValue(cIndex, out var parent))
-                {
-                    if (parent.parentOrigin >= 0)
-                    {
-                        ret.Add((cIndex = parent));
-                        continue;
-                    }
-                }
+                ret.Add((prev, next));
                 break;
             }
-            // reverse the list before returning it
-            ret.Reverse();
+            prev = next;
         }
+        // reverse the list before returning it
+        ret.Reverse();
         return ret;
     }
 }

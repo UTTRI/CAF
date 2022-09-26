@@ -8,6 +8,7 @@ internal sealed class Network
 {
     private readonly List<Node> _nodes;
     private readonly RTree<int> _nodeLookup;
+    private const int CacheChunkSize = 1024;
     public Network(string fileName)
     {
         var requestedFile = new FileInfo(fileName);
@@ -38,14 +39,14 @@ internal sealed class Network
 
     public int NodeCount => _nodes.Count;
 
-    private bool HasCachedVersion(FileInfo requestedFile)
+    private static bool HasCachedVersion(FileInfo requestedFile)
     {
         return File.Exists(GetCachedName(requestedFile));
     }
 
-    private string GetCachedName(FileInfo requestedFile) => requestedFile.FullName + ".cached";
+    private static string GetCachedName(FileInfo requestedFile) => requestedFile.FullName + ".cached";
 
-    private List<Node> LoadCachedVersion(FileInfo requestedFile)
+    private static List<Node> LoadCachedVersion(FileInfo requestedFile)
     {
         using var reader = new BinaryReader(File.OpenRead(GetCachedName(requestedFile)));
         var magicNumber = reader.ReadInt64();
@@ -134,7 +135,7 @@ internal sealed class Network
         return d;
     }
 
-    public (float time, float distance) Compute(float originX, float originY, float destinationX, float destinationY, int[] cache)
+    public (float time, float distance) Compute(float originX, float originY, float destinationX, float destinationY, int[] cache, bool[] dirtyBits)
     {
         // Find closest origin node in the network
         int originNodeIndex = FindClosestNodeIndex(originX, originY);
@@ -143,13 +144,12 @@ internal sealed class Network
         if(originNodeIndex == destinationNodeIndex)
         {
             // we don't need to clear the cache if we don't use the fastest path algorithm.
-            return (-1, -1);
+            return (0, 0);
         }
         // Find the fastest route between the two points
-        var path = GetFastestPath(originNodeIndex, destinationNodeIndex, cache);
+        var path = GetFastestPath(originNodeIndex, destinationNodeIndex, cache, dirtyBits);
         if (path is null)
         {
-            ClearCache(cache);
             return (-1, -1);
         }
         // Compute the travel time and distance for the fastest path
@@ -170,13 +170,20 @@ internal sealed class Network
                 }
             }
         }
-        ClearCache(cache);
         return (time, distance);
     }
 
-    private void ClearCache(int[] cache)
+    private static void ClearCache(int[] cache, bool[] dirtyBits)
     {
-        Array.Fill(cache, -1);
+        // only clean the dirty sections
+        for (int i = 0; i < dirtyBits.Length; i++)
+        {
+            if (dirtyBits[i])
+            {
+                Array.Fill(cache, -1, i * CacheChunkSize, Math.Min(CacheChunkSize, cache.Length - i * CacheChunkSize));
+                dirtyBits[i] = false;
+            }
+        }
     }
 
     /// <summary>
@@ -220,46 +227,54 @@ internal sealed class Network
     /// <param name="originNodeIndex"></param>
     /// <param name="destinationNodeIndex"></param>
     /// <returns></returns>
-    public List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex, int[] fastestParent)
+    public unsafe List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex, int[] fastestParent, bool[] dirtyBits)
     {
         if (originNodeIndex == destinationNodeIndex)
         {
             return new();
         }
+        ClearCache(fastestParent, dirtyBits);
         MinHeap toExplore = new();
-        fastestParent[originNodeIndex] = originNodeIndex;
-        foreach (var link in _nodes[originNodeIndex].Connections)
+        fixed (int* fp = fastestParent)
+        fixed (bool* db = dirtyBits)
         {
-            toExplore.Push(link.Destination, originNodeIndex, link.Time);
-        }
-        while (toExplore.Count > 0)
-        {
-            var current = toExplore.PopMin();
-            // don't explore things that we have already done
-            int currentDestination = current.Destination;
-            // if there was already a faster way to get here continue
-            if(fastestParent[currentDestination] != -1)
+            fp[originNodeIndex] = originNodeIndex;
+            db[originNodeIndex / CacheChunkSize] = true;
+            foreach (var link in _nodes[originNodeIndex].Connections)
             {
-                continue;
+                toExplore.Push(link.Destination, originNodeIndex, link.Time);
             }
-            fastestParent[currentDestination] = current.Origin;
-            // check to see if we have hit our destination
-            if (currentDestination == destinationNodeIndex)
+            while (toExplore.Count > 0)
             {
-                return GeneratePath(fastestParent, current);
-            }
-            var node = _nodes[currentDestination];
-            var links = node.Connections;
-            foreach (var childDestination in links)
-            {
-                // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
-                if (fastestParent[childDestination.Destination] == -1)
+                var current = toExplore.PopMin();
+                // don't explore things that we have already done
+                int currentDestination = current.Destination;
+                // if there was already a faster way to get here continue
+                if (fp[currentDestination] != -1)
                 {
-                    // make sure cars are allowed on the link
-                    var linkCost = childDestination.Time;
-                    if (linkCost >= 0)
+                    continue;
+                }
+                fp[currentDestination] = current.Origin;
+                db[currentDestination / CacheChunkSize] = true;
+                // check to see if we have hit our destination
+                if (currentDestination == destinationNodeIndex)
+                {
+                    return GeneratePath(fastestParent, current);
+                }
+                var node = _nodes[currentDestination];
+                var links = node.Connections;
+                // foreach (var childDestination in links)
+                for(int i = 0; i < links.Count; i++)
+                {
+                    // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
+                    if (fp[links[i].Destination] == -1)
                     {
-                        toExplore.Push(childDestination.Destination, currentDestination, current.Cost + linkCost);
+                        // make sure cars are allowed on the link
+                        var linkCost = links[i].Time;
+                        if (linkCost >= 0)
+                        {
+                            toExplore.Push(links[i].Destination, currentDestination, current.Cost + linkCost);
+                        }
                     }
                 }
             }
@@ -285,6 +300,15 @@ internal sealed class Network
         // reverse the list before returning it
         ret.Reverse();
         return ret;
+    }
+
+    internal (int[] fastestPath, bool[] dirtyBits) GetCache()
+    {
+        var fp = new int[_nodes.Count];
+        var dirty = new bool[(int)Math.Ceiling((float)_nodes.Count / CacheChunkSize)];
+        Array.Fill(fp, -1);
+        Array.Fill(dirty, false);
+        return (fp, dirty);
     }
 }
 

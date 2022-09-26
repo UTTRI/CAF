@@ -18,7 +18,7 @@ var watch = Stopwatch.StartNew();
 Parallel.ForEach(allDevices,
     ()=>
     {
-        return new int[network.NodeCount];
+        return network.GetCache();
     },
     (device, _, cache) =>
 #else
@@ -29,7 +29,7 @@ foreach (var device in allDevices)
     {
         var startingPoint = device[i - 1];
         var entry = device[i];
-        var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long, cache);
+        var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long, cache.fastestPath, cache.dirtyBits);
         if (time < 0)
         {
             Interlocked.Increment(ref failedPaths);

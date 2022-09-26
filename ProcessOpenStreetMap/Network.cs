@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Buffers;
+using System.Runtime.CompilerServices;
 using RTree;
 
 
@@ -31,14 +32,32 @@ internal sealed class Network
             Console.WriteLine("Network Loaded, storing cached version.");
             SaveCachedVersion(requestedFile);
         }
-        Console.WriteLine("Building closest node R-Tree");
-        _nodeLookup = new RTree<int>();
-        for (int i = 0; i < _nodes.Count; i++)
+        Console.WriteLine("Building indexes");
+        (_nodeLookup, _nodeOffset, _linkCounts, _links)
+            = BuildIndexes(_nodes);
+    }
+
+    private static (RTree<int> _nodeLookup, int[] _nodeOffset, int[] _linkCounts, Link[] _links) BuildIndexes(List<Node> nodes)
+    {
+        RTree<int>? _nodeLookup = null;
+        int[]? _nodeOffset = null;
+        int[]? _linkCounts = null;
+        Link[]? _links = null;
+        Parallel.Invoke(() =>
         {
-            var node = _nodes[i];
-            _nodeLookup.Add(new Rectangle(node.Lat, node.Lon, node.Lat, node.Lon, 0, 0), i);
-        }
-        (_nodeOffset, _linkCounts, _links) = CreateLinkTable(_nodes);
+
+            _nodeLookup = new RTree<int>();
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                _nodeLookup.Add(new Rectangle(node.Lat, node.Lon, node.Lat, node.Lon, 0, 0), i);
+            }
+
+        }, () =>
+        {
+            (_nodeOffset, _linkCounts, _links) = CreateLinkTable(nodes);
+        });
+        return (_nodeLookup!, _nodeOffset!, _linkCounts!, _links!);
     }
 
     public int NodeCount => _nodes.Count;
@@ -84,14 +103,14 @@ internal sealed class Network
         return ret;
     }
 
-    private static (int[]nodeOffset, int[] linkCount, Link[]) CreateLinkTable(List<Node> nodes)
+    private static (int[] nodeOffset, int[] linkCount, Link[]) CreateLinkTable(List<Node> nodes)
     {
         var nodeOffset = new int[nodes.Count];
         var linkCount = new int[nodes.Count];
         var numberOfLinks = nodes.Sum(n => n.Connections.Count);
         var links = new Link[numberOfLinks];
         int currentPosition = 0;
-        for(int i = 0; i < nodes.Count; i++)
+        for (int i = 0; i < nodes.Count; i++)
         {
             nodeOffset[i] = currentPosition;
             linkCount[i] = nodes[i].Connections.Count;
@@ -165,13 +184,13 @@ internal sealed class Network
         int originNodeIndex = FindClosestNodeIndex(originX, originY);
         // Find closest destination node in the network
         int destinationNodeIndex = FindClosestNodeIndex(destinationX, destinationY);
-        if(originNodeIndex == destinationNodeIndex)
+        if (originNodeIndex == destinationNodeIndex)
         {
             // we don't need to clear the cache if we don't use the fastest path algorithm.
             return (0, 0);
         }
         // Find the fastest route between the two points
-        var path = GetFastestPath(originNodeIndex, destinationNodeIndex, cache, dirtyBits);
+        var path = GetFastestPathAStar(originNodeIndex, destinationNodeIndex, cache, dirtyBits);
         if (path is null)
         {
             return (-1, -1);
@@ -251,7 +270,7 @@ internal sealed class Network
     /// <param name="originNodeIndex"></param>
     /// <param name="destinationNodeIndex"></param>
     /// <returns></returns>
-    public unsafe List<(int origin, int destination)>? GetFastestPath(int originNodeIndex, int destinationNodeIndex, int[] fastestParent, bool[] dirtyBits)
+    public unsafe List<(int origin, int destination)>? GetFastestPathDijkstra(int originNodeIndex, int destinationNodeIndex, int[] fastestParent, bool[] dirtyBits)
     {
         if (originNodeIndex == destinationNodeIndex)
         {
@@ -286,7 +305,7 @@ internal sealed class Network
                 // check to see if we have hit our destination
                 if (currentDestination == destinationNodeIndex)
                 {
-                    return GeneratePath(fastestParent, current);
+                    return GeneratePath(fastestParent, destinationNodeIndex);
                 }
                 // foreach (var childDestination in links)
                 var nodeOffset = no[currentDestination];
@@ -307,18 +326,116 @@ internal sealed class Network
         }
         return null;
     }
+
+    /// <summary>
+    /// Thread-safe on a static network
+    /// </summary>
+    /// <param name="originNodeIndex"></param>
+    /// <param name="destinationNodeIndex"></param>
+    /// <returns></returns>
+    public unsafe List<(int origin, int destination)>? GetFastestPathAStar(int originNodeIndex, int destinationNodeIndex, int[] fastestParent, bool[] dirtyBits)
+    {
+        if (originNodeIndex == destinationNodeIndex)
+        {
+            return new();
+        }
+        ClearCache(fastestParent, dirtyBits);
+        MinHeapAStar toExplore = new();
+        var finalDestLat = _nodes[destinationNodeIndex].Lat;
+        var finalDestLon = _nodes[destinationNodeIndex].Lon;
+        var distancesRented = ArrayPool<float>.Shared.Rent(_nodes.Count);
+        Array.Clear(distancesRented);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        float GetDistance(float* distances, int originIndex)
+        {
+            if (distances[originIndex] <= 0)
+            {
+                distances[originIndex] = ComputeDistance(_nodes[originIndex].Lat, _nodes[originIndex].Lon, finalDestLat, finalDestLon);
+            }
+            return distances[originIndex];
+        }
+        try
+        {
+            fixed (int* fp = fastestParent)
+            fixed (bool* db = dirtyBits)
+            fixed (int* no = _nodeOffset)
+            fixed (int* lc = _linkCounts)
+            fixed (Link* l = _links)
+            fixed (float* distances = distancesRented)
+            {
+                fp[originNodeIndex] = originNodeIndex;
+                db[originNodeIndex / CacheChunkSize] = true;
+                foreach (var link in _nodes[originNodeIndex].Connections)
+                {
+                    toExplore.Push(link.Destination, originNodeIndex, link.Time + GetDistance(distances, link.Destination), link.Time);
+                }
+                while (toExplore.Count > 0)
+                {
+                    var current = toExplore.PopMin();
+                    // don't explore things that we have already done
+                    int currentDestination = current.Destination;
+                    // if there was already a faster way to get here continue
+                    if (fp[currentDestination] != -1)
+                    {
+                        continue;
+                    }
+                    fp[currentDestination] = current.Origin;
+                    db[currentDestination / CacheChunkSize] = true;
+                    // check to see if we have hit our destination
+                    if (currentDestination == destinationNodeIndex)
+                    {
+                        return GeneratePath(fastestParent, destinationNodeIndex);
+                    }
+                    // foreach (var childDestination in links)
+                    var nodeOffset = no[currentDestination];
+                    for (int i = 0; i < lc[currentDestination]; i++)
+                    {
+                        // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
+                        if (fp[l[nodeOffset + i].Destination] == -1)
+                        {
+                            // make sure cars are allowed on the link
+                            var linkCost = l[nodeOffset + i].Time;
+                            if (linkCost >= 0)
+                            {
+                                toExplore.Push(l[nodeOffset + i].Destination, currentDestination,
+                                    current.CostSoFar + linkCost + GetDistance(distances, l[nodeOffset + i].Destination),
+                                    current.CostSoFar + linkCost);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<float>.Shared.Return(distancesRented, false);
+        }
+        return null;
+    }
+
+    private unsafe void FillDistances(float* distances, int destinationNodeIndex)
+    {
+        var destLat = _nodes[destinationNodeIndex].Lat;
+        var destLon = _nodes[destinationNodeIndex].Lon;
+        for (int i = 0; i < _nodes.Count; i++)
+        {
+            distances[i] = ComputeDistance(_nodes[i].Lat, _nodes[i].Lon, destLat, destLon);
+        }
+    }
+
     private static List<(int origin, int destination)> GeneratePath(int[] fastestParent,
-            (int Destination, int Origin, float cost) current)
+            int destination)
     {
         // unwind the parents to build the path
         var ret = new List<(int, int)>();
-        var prev = current.Destination;
-        while(prev > 0)
+        var prev = destination;
+        while (prev > 0)
         {
             var next = fastestParent[prev];
             if (next != prev)
             {
-                ret.Add((prev, next));
+                ret.Add((next, prev));
                 break;
             }
             prev = next;

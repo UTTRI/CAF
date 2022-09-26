@@ -6,7 +6,7 @@ using System.Threading;
 
 Network network = new(@"./Rio.osmx");
 Console.WriteLine("Finished loading network.");
-var allDevices = ChunkEntry.EnumerateEntries(@"./Chunked-2019.09.02/Chunk-1.csv")
+var allDevices = ChunkEntry.EnumerateEntries(@"./Chunked-2019.09.02")
     .GroupBy(chunk => chunk.DeviceID, (_, chunkGroup) => chunkGroup.OrderBy(c2 => c2.TS).ToArray())
     .ToArray();
 Console.WriteLine("Finished loading Entries...");

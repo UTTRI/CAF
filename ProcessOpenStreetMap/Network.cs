@@ -190,7 +190,7 @@ internal sealed class Network
             return (0, 0);
         }
         // Find the fastest route between the two points
-        var path = GetFastestPathAStar(originNodeIndex, destinationNodeIndex, cache, dirtyBits);
+        var path = GetFastestPathDijkstra(originNodeIndex, destinationNodeIndex, cache, dirtyBits);
         if (path is null)
         {
             return (-1, -1);

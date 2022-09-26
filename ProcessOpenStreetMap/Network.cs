@@ -168,10 +168,12 @@ internal sealed class Network
         const float earthRadius = 6371.0f; // Radius of the earth in km
         var dLat = ToRads(lat2 - lat1);  // deg2rad below
         var dLon = ToRads(lon2 - lon1);
+        float SinDLatDiv2 = MathF.Sin(dLat / 2.0f);
+        float SinDLonDiv2 = MathF.Sin(dLon / 2.0f);
         var a =
-          MathF.Sin(dLat / 2.0f) * MathF.Sin(dLat / 2.0f) +
+          SinDLatDiv2 * SinDLatDiv2 +
           MathF.Cos(ToRads(lat1)) * MathF.Cos(ToRads(lat2)) *
-          MathF.Sin(dLon / 2.0f) * MathF.Sin(dLon / 2.0f)
+          SinDLonDiv2 * SinDLonDiv2
           ;
         var c = 2 * MathF.Atan2(MathF.Sqrt(a), MathF.Sqrt(1.0f - a));
         var d = earthRadius * c; // Distance in km

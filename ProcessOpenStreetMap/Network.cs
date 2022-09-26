@@ -7,6 +7,9 @@ namespace ProcessOpenStreetMap;
 internal sealed class Network
 {
     private readonly List<Node> _nodes;
+    private readonly Link[] _links;
+    private readonly int[] _nodeOffset;
+    private readonly int[] _linkCounts;
     private readonly RTree<int> _nodeLookup;
     private const int CacheChunkSize = 1024;
     public Network(string fileName)
@@ -35,6 +38,7 @@ internal sealed class Network
             var node = _nodes[i];
             _nodeLookup.Add(new Rectangle(node.Lat, node.Lon, node.Lat, node.Lon, 0, 0), i);
         }
+        (_nodeOffset, _linkCounts, _links) = CreateLinkTable(_nodes);
     }
 
     public int NodeCount => _nodes.Count;
@@ -78,6 +82,26 @@ internal sealed class Network
         }
         Console.WriteLine($"Number of links {linkSum}");
         return ret;
+    }
+
+    private static (int[]nodeOffset, int[] linkCount, Link[]) CreateLinkTable(List<Node> nodes)
+    {
+        var nodeOffset = new int[nodes.Count];
+        var linkCount = new int[nodes.Count];
+        var numberOfLinks = nodes.Sum(n => n.Connections.Count);
+        var links = new Link[numberOfLinks];
+        int currentPosition = 0;
+        for(int i = 0; i < nodes.Count; i++)
+        {
+            nodeOffset[i] = currentPosition;
+            linkCount[i] = nodes[i].Connections.Count;
+            for (int j = 0; j < nodes[i].Connections.Count; j++)
+            {
+                links[currentPosition] = nodes[i].Connections[j];
+                currentPosition++;
+            }
+        }
+        return (nodeOffset, linkCount, links);
     }
 
     private void SaveCachedVersion(FileInfo requestedFile)
@@ -237,6 +261,9 @@ internal sealed class Network
         MinHeap toExplore = new();
         fixed (int* fp = fastestParent)
         fixed (bool* db = dirtyBits)
+        fixed (int* no = _nodeOffset)
+        fixed (int* lc = _linkCounts)
+        fixed (Link* l = _links)
         {
             fp[originNodeIndex] = originNodeIndex;
             db[originNodeIndex / CacheChunkSize] = true;
@@ -261,19 +288,18 @@ internal sealed class Network
                 {
                     return GeneratePath(fastestParent, current);
                 }
-                var node = _nodes[currentDestination];
-                var links = node.Connections;
                 // foreach (var childDestination in links)
-                for(int i = 0; i < links.Count; i++)
+                var nodeOffset = no[currentDestination];
+                for (int i = 0; i < lc[currentDestination]; i++)
                 {
                     // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
-                    if (fp[links[i].Destination] == -1)
+                    if (fp[l[nodeOffset + i].Destination] == -1)
                     {
                         // make sure cars are allowed on the link
-                        var linkCost = links[i].Time;
+                        var linkCost = l[nodeOffset + i].Time;
                         if (linkCost >= 0)
                         {
-                            toExplore.Push(links[i].Destination, currentDestination, current.Cost + linkCost);
+                            toExplore.Push(l[nodeOffset + i].Destination, currentDestination, current.Cost + linkCost);
                         }
                     }
                 }

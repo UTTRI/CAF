@@ -6,29 +6,36 @@ using System.Threading;
 
 Network network = new(@"Z:\Groups\TMG\Research\2022\CAF\Rio\Rio.osmx");
 Console.WriteLine("Finished loading network.");
-var startingPoint = ChunkEntry.EnumerateEntries(@"Z:\Groups\TMG\Research\2022\CAF\Rio\Chunked-2019.09.02\Chunk-1.csv").First();
-var allEntries = ChunkEntry.EnumerateEntries(@"Z:\Groups\TMG\Research\2022\CAF\Rio\Chunked-2019.09.02\Chunk-1.csv").ToArray();
+var allDevices = ChunkEntry.EnumerateEntries(@"Z:\Groups\TMG\Research\2022\CAF\Rio\Chunked-2019.09.02\Chunk-1.csv")
+    .GroupBy(chunk => chunk.DeviceID, (_, chunkGroup) => chunkGroup.OrderBy(c2 => c2.TS).ToArray())
+    .ToArray();
 Console.WriteLine("Finished loading Entries...");
-int processed = 0;
+int processedDevices = 0;
 int failedPaths = 0;
 Console.WriteLine("Starting to process entries.");
 var watch = Stopwatch.StartNew();
 #if PARALLEL
-Parallel.ForEach(allEntries, entry =>
+Parallel.ForEach(allDevices,
+    device =>
 #else
-foreach (var entry in allEntries)
+foreach (var device in allDevices)
 #endif
 {
-    var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long);
-    var p = Interlocked.Increment(ref processed);
-    if(time < 0)
+    for (int i = 1; i < device.Length; i++)
     {
-        Interlocked.Increment(ref failedPaths);
+        var startingPoint = device[i - 1];
+        var entry = device[i];
+        var (time, distance) = network.Compute(startingPoint.Lat, startingPoint.Long, entry.Lat, entry.Long);        
+        if (time < 0)
+        {
+            Interlocked.Increment(ref failedPaths);
+        }
     }
+    var p = Interlocked.Increment(ref processedDevices);
     if (p % 100 == 0)
     {
-        var ts = TimeSpan.FromMilliseconds(((float)watch.ElapsedMilliseconds / p) * (allEntries.Length - p));
-        Console.Write($"Processing {processed} of {allEntries.Length}, Estimated time remaining: " +
+        var ts = TimeSpan.FromMilliseconds(((float)watch.ElapsedMilliseconds / p) * (allDevices.Length - p));
+        Console.Write($"Processing {p} of {allDevices.Length}, Estimated time remaining: " +
             $"{(ts.Days != 0 ? ts.Days + ":" : "")}{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}\r");
     }
 }

@@ -5,7 +5,6 @@ internal record struct ChunkEntry
 {
     public static IEnumerable<ChunkEntry> EnumerateEntries(string filePath)
     {
-        var ret = new Dictionary<string, List<ChunkEntry>>();
         foreach (var parts in File.ReadLines(filePath)
             .Skip(1)
             .Select(l => l.Split(',')))
@@ -15,7 +14,6 @@ internal record struct ChunkEntry
             {
                 continue;
             }
-            var id = parts[0];
             var entry = new ChunkEntry(parts[0],
                 float.Parse(parts[1]),
                 float.Parse(parts[2]),

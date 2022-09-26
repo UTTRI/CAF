@@ -9,6 +9,12 @@ internal sealed class MinHeap
 
     public int Count => _data.Count;
 
+    public void Reset()
+    {
+        _contained.Clear();
+        _data.Clear();
+    }
+
     public ((int origin, int destination) link,
         (int parentOrigin, int parentDestination) parentLink, float cost) PopMin()
     {

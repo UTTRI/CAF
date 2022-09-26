@@ -30,7 +30,7 @@ internal static class OSMLoader
             var destinationIndex = nodeLookup[second];
             var destination = networkNodes[destinationIndex];
             var travelTime = Network.ComputeDistance(origin.Lat, origin.Lon, destination.Lat, destination.Lon);
-            origin.Connections.Add(new Link(originIndex, destinationIndex, travelTime));
+            origin.Connections.Add(new Link(destinationIndex, travelTime));
         }
 
         HashSet<long> nodesInWays = new();

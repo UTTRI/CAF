@@ -70,7 +70,7 @@ internal sealed class Network
                 linkSum++;
                 var destination = reader.ReadInt32();
                 var time = reader.ReadSingle();
-                ret[i].Connections.Add(new Link(i, destination, time));
+                ret[i].Connections.Add(new Link(destination, time));
             }
         }
         Console.WriteLine($"Number of links {linkSum}");
@@ -293,7 +293,6 @@ internal record struct Node(float Lat, float Lon, List<Link> Connections);
 /// Represents a connection between nodes and the associated travel time
 /// between those nodes.
 /// </summary>
-/// <param name="Origin"></param>
 /// <param name="Destination"></param>
 /// <param name="Time"></param>
-internal record struct Link(int Origin, int Destination, float Time);
+internal record struct Link(int Destination, float Time);

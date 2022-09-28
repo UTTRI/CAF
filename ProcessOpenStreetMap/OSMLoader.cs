@@ -3,6 +3,7 @@ using OsmSharp.API;
 using OsmSharp.Streams;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace ProcessOpenStreetMap;
 
@@ -15,12 +16,41 @@ internal static class OSMLoader
 
         void StoreNode(OsmSharp.Node node)
         {
-            if(node.Id is null)
+            if (node.Id is null)
             {
                 ThrowNoId();
             }
             networkNodes.Add(ConvertNode(node));
             nodeLookup[(long)node.Id] = networkNodes.Count - 1;
+        }
+
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        static float GetTravelTime(float distance, HighwayType type)
+        {
+            static float GetSpeedInKMPerMinute(HighwayType type)
+            {
+                const float freewaySpeed = 100.0f / 60.0f;
+                const float highwaySpeed = 80.0f / 60.0f;
+                const float arterialSpeed = 60.0f / 60.0f;
+                const float defaultSpeed = 40.0f / 60.0f;
+                return type switch
+                {
+                    HighwayType.Trunk => freewaySpeed,
+                    HighwayType.TrunkLink => freewaySpeed,
+                    HighwayType.Motorway => freewaySpeed,
+                    HighwayType.MotorwayLink => freewaySpeed,
+                    HighwayType.Primary => highwaySpeed,
+                    HighwayType.PrimaryLink => highwaySpeed,
+                    HighwayType.Secondary => arterialSpeed,
+                    HighwayType.SecondaryLink => arterialSpeed,
+                    HighwayType.Tertiary => arterialSpeed,
+                    HighwayType.TertiaryLink => arterialSpeed,
+                    _ => defaultSpeed
+                };
+            }
+            return GetSpeedInKMPerMinute(type) * distance;
         }
 
         void StoreLink(long first, long second, HighwayType type)
@@ -29,8 +59,8 @@ internal static class OSMLoader
             var origin = networkNodes[originIndex];
             var destinationIndex = nodeLookup[second];
             var destination = networkNodes[destinationIndex];
-            var travelTime = Network.ComputeDistance(origin.Lat, origin.Lon, destination.Lat, destination.Lon);
-            origin.Connections.Add(new Link(destinationIndex, travelTime));
+            var time = GetTravelTime(Network.ComputeDistance(origin.Lat, origin.Lon, destination.Lat, destination.Lon), type);
+            origin.Connections.Add(new Link(destinationIndex, time));
         }
 
         HashSet<long> nodesInWays = new();
@@ -83,12 +113,12 @@ internal static class OSMLoader
         // Now finally construct all of the links
         stream.Reset();
         Console.WriteLine("Creating links for all ways.");
-        foreach(var entry in stream)
+        foreach (var entry in stream)
         {
             if (entry.Type == OsmGeoType.Way && entry is Way way)
             {
                 long prev = -1;
-                HighwayType type = HighwayType.NotRoad; 
+                HighwayType type = HighwayType.NotRoad;
                 bool oneWay = false;
                 if (way.Tags is not null)
                 {
@@ -100,7 +130,7 @@ internal static class OSMLoader
                             {
                                 type = GetHighwayClass(tag.Value);
                             }
-                            if(tag.Key.Equals("oneway", StringComparison.InvariantCultureIgnoreCase)
+                            if (tag.Key.Equals("oneway", StringComparison.InvariantCultureIgnoreCase)
                                 && tag.Value.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 oneWay = true;
@@ -128,11 +158,15 @@ internal static class OSMLoader
         return networkNodes;
     }
 
+    // https://wiki.openstreetmap.org/wiki/Key:highway
     private static HighwayType GetHighwayClass(string value)
     {
         return value switch
         {
-            "road" => HighwayType.Road,
+            "motorway" => HighwayType.Motorway,
+            "motorway_link" => HighwayType.MotorwayLink,
+            "trunk" => HighwayType.Trunk,
+            "trunk_link" => HighwayType.Trunk,
             "primary" => HighwayType.Primary,
             "secondary" => HighwayType.Secondary,
             "tertiary" => HighwayType.Tertiary,
@@ -140,8 +174,7 @@ internal static class OSMLoader
             "primary_link" => HighwayType.PrimaryLink,
             "secondary_link" => HighwayType.SecondaryLink,
             "tertiary_link" => HighwayType.TertiaryLink,
-            "motorway" => HighwayType.Motorway,
-            "motorway_link" => HighwayType.MotorwayLink,
+            "road" => HighwayType.Road,
             _ => HighwayType.NotRoad
         };
     }
@@ -166,14 +199,16 @@ internal static class OSMLoader
 enum HighwayType
 {
     NotRoad = 0,
-    Road,
-    Residential,
-    Tertiary,
+    Motorway,
+    MotorwayLink,
+    Trunk,
+    TrunkLink,
     Primary,
+    PrimaryLink,
     Secondary,
     SecondaryLink,
-    MotorwayLink,
-    Motorway,
+    Tertiary,
     TertiaryLink,
-    PrimaryLink,
+    Residential,
+    Road,
 }

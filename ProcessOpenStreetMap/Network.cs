@@ -215,7 +215,11 @@ internal sealed class Network
                 }
             }
         }
-        return (time, distance);
+        // figure out the distance to and from the road network
+        var distanceToAndFrom = ComputeDistance(originX, originY, _nodes[originNodeIndex].Lat, _nodes[originNodeIndex].Lon)
+            + ComputeDistance(_nodes[destinationNodeIndex].Lat, _nodes[destinationNodeIndex].Lon, destinationX, destinationY);
+        // Add the time to and from the road network assuming 40km/h
+        return (time + (distanceToAndFrom * 40.0f / 60.0f), distance + distanceToAndFrom);
     }
 
     private static void ClearCache(int[] cache, bool[] dirtyBits)
@@ -435,11 +439,12 @@ internal sealed class Network
         while (prev > 0)
         {
             var next = fastestParent[prev];
-            if (next != prev)
+            // break if we hit a cycle often found at the origin.
+            if (next == prev)
             {
-                ret.Add((next, prev));
                 break;
             }
+            ret.Add((next, prev));
             prev = next;
         }
         // reverse the list before returning it

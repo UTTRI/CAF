@@ -14,16 +14,16 @@ int processedDevices = 0;
 int failedPaths = 0;
 Console.WriteLine("Starting to process entries.");
 var watch = Stopwatch.StartNew();
-List<ProcessedRecord> processedRecords = new();
-Parallel.For(0, allDevices.Length,
+var totalEntries = allDevices.Sum(dev => dev.Length);
+List<ProcessedRecord> processedRecords = new(totalEntries);
+Parallel.ForEach(allDevices,
     () =>
     {
-        return (Cache : network.GetCache(), Results :  new List<ProcessedRecord>());
+        return (Cache : network.GetCache(), Results :  new List<ProcessedRecord>(totalEntries / System.Environment.ProcessorCount));
     },
-    (deviceIndex, _, local) =>
+    (device, _, local) =>
     {
         var (cache, records) = (local.Cache, local.Results);
-        var device = allDevices[deviceIndex];
         for (int i = 1; i < device.Length; i++)
         {
             var startingPoint = device[i - 1];
@@ -62,6 +62,7 @@ using var writer = new StreamWriter(@"Z:\Groups\TMG\Research\2022\CAF\Rio\Proces
 writer.WriteLine("DeviceId,TS,TravelTime,RoadDistance,Distance");
 foreach(var device in processedRecords
     .GroupBy(entry => entry.DeviceId, (id, deviceRecords) => (ID: id, Records: deviceRecords.OrderBy(record => record.TS)))
+    .OrderBy(dev => dev.ID)
     )
 {
     var id = device.ID;

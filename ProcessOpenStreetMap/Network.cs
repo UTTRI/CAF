@@ -153,6 +153,7 @@ internal sealed class Network
     /// Approximates the distance between two lat/lon points.  
     /// Relatively accurate within ~4000KM.
     /// https://en.wikipedia.org/wiki/Haversine_formula
+    /// https://rosettacode.org/wiki/Haversine_formula#C++
     /// </summary>
     /// <param name="lat1"></param>
     /// <param name="lon1"></param>
@@ -163,21 +164,20 @@ internal sealed class Network
     public static float ComputeDistance(float lat1, float lon1, float lat2, float lon2)
     {
         [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-        static float ToRads(float deg) => deg * (MathF.PI / 180.0f);
+        static double DegreeToRadian(float deg) => deg * (Math.PI / 180.0f);
 
-        const float earthRadius = 6371.0f; // Radius of the earth in km
-        var dLat = ToRads(lat2 - lat1);  // deg2rad below
-        var dLon = ToRads(lon2 - lon1);
-        float SinDLatDiv2 = MathF.Sin(dLat / 2.0f);
-        float SinDLonDiv2 = MathF.Sin(dLon / 2.0f);
-        var a =
-          SinDLatDiv2 * SinDLatDiv2 +
-          MathF.Cos(ToRads(lat1)) * MathF.Cos(ToRads(lat2)) *
-          SinDLonDiv2 * SinDLonDiv2
-          ;
-        var c = 2 * MathF.Atan2(MathF.Sqrt(a), MathF.Sqrt(1.0f - a));
-        var d = earthRadius * c; // Distance in km
-        return d;
+        const double earthRadius = 6371.0; // Radius of the earth in km
+        double latRad1 = DegreeToRadian(lat1);
+        double latRad2 = DegreeToRadian(lat2);
+        double lonRad1 = DegreeToRadian(lon1);
+        double lonRad2 = DegreeToRadian(lon2);
+
+        double diffLa = latRad2 - latRad1;
+        double doffLo = lonRad2 - lonRad1;
+
+        double computation = Math.Asin(Math.Sqrt(Math.Sin(diffLa / 2) * Math.Sin(diffLa / 2) 
+            + Math.Cos(latRad1) * Math.Cos(latRad2) * Math.Sin(doffLo / 2) * Math.Sin(doffLo / 2)));
+        return (float) (2 * earthRadius * computation);
     }
 
     public (float time, float distance) Compute(float originX, float originY, float destinationX, float destinationY, int[] cache, bool[] dirtyBits)
@@ -298,24 +298,22 @@ internal sealed class Network
             }
             while (toExplore.Count > 0)
             {
-                var current = toExplore.PopMin();
+                var (Destination, Origin, Cost) = toExplore.PopMin();
                 // don't explore things that we have already done
-                int currentDestination = current.Destination;
-                // if there was already a faster way to get here continue
-                if (fp[currentDestination] != -1)
+                if (fp[Destination] != -1)
                 {
                     continue;
                 }
-                fp[currentDestination] = current.Origin;
-                db[currentDestination / CacheChunkSize] = true;
+                fp[Destination] = Origin;
+                db[Destination / CacheChunkSize] = true;
                 // check to see if we have hit our destination
-                if (currentDestination == destinationNodeIndex)
+                if (Destination == destinationNodeIndex)
                 {
                     return GeneratePath(fastestParent, destinationNodeIndex);
                 }
                 // foreach (var childDestination in links)
-                var nodeOffset = no[currentDestination];
-                for (int i = 0; i < lc[currentDestination]; i++)
+                var nodeOffset = no[Destination];
+                for (int i = 0; i < lc[Destination]; i++)
                 {
                     // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
                     if (fp[l[nodeOffset + i].Destination] == -1)
@@ -324,7 +322,7 @@ internal sealed class Network
                         var linkCost = l[nodeOffset + i].Time;
                         if (linkCost >= 0)
                         {
-                            toExplore.Push(l[nodeOffset + i].Destination, currentDestination, current.Cost + linkCost);
+                            toExplore.Push(l[nodeOffset + i].Destination, Destination, Cost + linkCost);
                         }
                     }
                 }
@@ -378,24 +376,22 @@ internal sealed class Network
                 }
                 while (toExplore.Count > 0)
                 {
-                    var current = toExplore.PopMin();
+                    var (Destination, Origin, CostSoFar) = toExplore.PopMin();
                     // don't explore things that we have already done
-                    int currentDestination = current.Destination;
-                    // if there was already a faster way to get here continue
-                    if (fp[currentDestination] != -1)
+                    if (fp[Destination] != -1)
                     {
                         continue;
                     }
-                    fp[currentDestination] = current.Origin;
-                    db[currentDestination / CacheChunkSize] = true;
+                    fp[Destination] = Origin;
+                    db[Destination / CacheChunkSize] = true;
                     // check to see if we have hit our destination
-                    if (currentDestination == destinationNodeIndex)
+                    if (Destination == destinationNodeIndex)
                     {
                         return GeneratePath(fastestParent, destinationNodeIndex);
                     }
                     // foreach (var childDestination in links)
-                    var nodeOffset = no[currentDestination];
-                    for (int i = 0; i < lc[currentDestination]; i++)
+                    var nodeOffset = no[Destination];
+                    for (int i = 0; i < lc[Destination]; i++)
                     {
                         // explore everything that hasn't been solved, the min heap will update if it is a faster path to the child node
                         if (fp[l[nodeOffset + i].Destination] == -1)
@@ -404,9 +400,9 @@ internal sealed class Network
                             var linkCost = l[nodeOffset + i].Time;
                             if (linkCost >= 0)
                             {
-                                toExplore.Push(l[nodeOffset + i].Destination, currentDestination,
-                                    current.CostSoFar + linkCost + GetDistance(distances, l[nodeOffset + i].Destination),
-                                    current.CostSoFar + linkCost);
+                                toExplore.Push(l[nodeOffset + i].Destination, Destination,
+                                    CostSoFar + linkCost + GetDistance(distances, l[nodeOffset + i].Destination),
+                                    CostSoFar + linkCost);
                             }
                         }
                     }

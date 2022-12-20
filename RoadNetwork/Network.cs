@@ -10,6 +10,9 @@ public sealed class Network
 {
     private readonly List<Node> _nodes;
     private readonly Link[] _links;
+    private readonly float[] _lanes;
+    private readonly float[] _capacity;
+    private readonly float[] _exponent;
     private readonly int[] _nodeOffset;
     private readonly int[] _linkCounts;
     private readonly RTree<int> _nodeLookup;
@@ -36,6 +39,47 @@ public sealed class Network
         Console.WriteLine("Building indexes");
         (_nodeLookup, _nodeOffset, _linkCounts, _links)
             = BuildIndexes(_nodes);
+        // TOOD: Actually load in the links properly
+        _lanes = new float[_links.Length];
+        Array.Fill(_lanes, 1.0f);
+        (_capacity, _exponent)  = ComputeCapacity();
+    }
+
+    private (float[] Capacity, float[] Exponent) ComputeCapacity()
+    {
+        var capacity = new float[_links.Length];
+        var exponent = new float[_links.Length];
+        for (int i = 0; i < capacity.Length; i++)
+        {
+            switch (_links[i].RoadType)
+            {
+                case HighwayType.Motorway:
+                case HighwayType.MotorwayLink:
+                    capacity[i] = 2000.0f;
+                    exponent[i] = 6.0f;
+                    break;
+                case HighwayType.Trunk:
+                case HighwayType.TrunkLink:
+                    capacity[i] = 2000.0f;
+                    exponent[i] = 6.0f;
+                    break;
+                case HighwayType.Primary:
+                case HighwayType.PrimaryLink:
+                    capacity[i] = 1400.0f;
+                    exponent[i] = 4.0f;
+                    break;
+                case HighwayType.Secondary:
+                case HighwayType.SecondaryLink:
+                    capacity[i] = 800.0f;
+                    exponent[i] = 4.0f;
+                    break;
+                default:
+                    capacity[i] = 500.0f;
+                    exponent[i] = 4.0f;
+                    break;
+            }
+        }
+        return (capacity, exponent);
     }
 
     private static (RTree<int> _nodeLookup, int[] _nodeOffset, int[] _linkCounts, Link[] _links) BuildIndexes(List<Node> nodes)
@@ -62,6 +106,8 @@ public sealed class Network
     }
 
     public int NodeCount => _nodes.Count;
+
+    public int LinkCount => _links.Length;
 
     private static bool HasCachedVersion(FileInfo requestedFile)
     {
@@ -205,7 +251,7 @@ public sealed class Network
         {
             return (-1, -1, HighwayType.NotRoad, HighwayType.NotRoad);
         }
-        
+
         // Compute the travel time and distance for the fastest path
         var distance = 0.0f;
         var time = 0.0f;
@@ -245,10 +291,10 @@ public sealed class Network
     {
         HighwayType ret = HighwayType.NotRoad;
         float closest = float.PositiveInfinity;
-        foreach(var link in _nodes[nodeIndex].Connections)
+        foreach (var link in _nodes[nodeIndex].Connections)
         {
             var distance = ComputeDistance(x, y, _nodes[link.Destination].Lat, _nodes[link.Destination].Lon);
-            if(distance < closest)
+            if (distance < closest)
             {
                 closest = distance;
                 ret = link.RoadType;
@@ -405,6 +451,34 @@ public sealed class Network
         Array.Fill(fp, -1);
         Array.Fill(dirty, false);
         return (fp, dirty);
+    }
+
+    /// <summary>
+    /// Modify the link travel times to the given values
+    /// </summary>
+    /// <param name="volumes">The new travel times, the length of this array must be the same size as the number of links.</param>
+    public void UpdateLinkTravelTimes(float[] volumes, float[] freeFlowTime)
+    {
+        if (volumes.Length != _links.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(volumes), "The size of the times must be the same as the number of links in the network.");
+        }
+        for (int i = 0; i < volumes.Length; i++)
+        {
+            // (length*60/ul2)*((1+put((volau+volad+el1)/(lanes*ul3))^6)*(get(1).le.1)+(6*get(1)-4)*(get(1).gt.1))
+            var ratio = volumes[i] / (_capacity[i] * _lanes[i]);
+            _links[i].Time =
+                freeFlowTime[i] * (ratio <= 1 ? (1.0f + MathF.Pow(ratio * _lanes[i], _exponent[i])) : (_exponent[i] * ratio - (_exponent[i] - 2.0f)));
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public float[] GetTimes()
+    {
+        return _links.Select(link => link.Time).ToArray();
     }
 }
 

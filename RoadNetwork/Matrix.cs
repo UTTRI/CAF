@@ -76,4 +76,47 @@ public class Matrix
     /// <param name="row">The row to get the index of.</param>
     /// <returns>The index into the data array where the row starts.</returns>
     public int IndexOfRow(int row) => _rowSize * row;
+
+    /// <summary>
+    /// Store the matrix to the given file.  Zeros will
+    /// be dropped from the records.
+    /// </summary>
+    /// <param name="zoneSystem">The zone system for this matrix.</param>
+    /// <param name="finalTravelTimesFile">The path to the file location to save this matrix to.</param>
+    public void Save(ZoneSystem zoneSystem, string finalTravelTimesFile)
+    {
+        CreateDirectoryIfNeeded(finalTravelTimesFile);
+        using var writer = new StreamWriter(finalTravelTimesFile);
+        writer.WriteLine("Origin,Destination,Value");
+        int pos = 0;
+        for(int i = 0; i < zoneSystem.Length; i++)
+        {
+            var originString = zoneSystem.SparseZones[i] + ",";
+            for(int j = 0; j < zoneSystem.Length; j++)
+            {
+                var toWrite = _data[pos++];
+                if(toWrite != 0)
+                {
+                    writer.Write(originString);
+                    writer.Write(zoneSystem.SparseZones[j]);
+                    writer.Write(',');
+                    writer.WriteLine(toWrite);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Create the given directory to the file path provided if
+    /// it does not exist.
+    /// </summary>
+    /// <param name="finalTravelTimesFile">The file path to create the directory for.</param>
+    private void CreateDirectoryIfNeeded(string finalTravelTimesFile)
+    {
+        var directory = Path.GetDirectoryName(finalTravelTimesFile);
+        if(directory is not null && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+    }
 }

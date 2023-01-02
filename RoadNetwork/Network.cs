@@ -287,6 +287,61 @@ public sealed class Network
         return (time + (distanceToAndFrom * (40.0f / 60.0f)), distance + distanceToAndFrom, originRoadType, destinationRoadType);
     }
 
+    /// <summary>
+    /// Get the travel time for a given path
+    /// </summary>
+    /// <param name="path">The path in order to get the travel times from.</param>
+    /// <returns>The total travel time for the path.</returns>
+    public float GetTravelTime(List<(int origin, int destination)>? path)
+    {
+        if (path is null) return -1;
+        if (path.Count == 0) return 0f;
+
+        var time = 0.0f;
+        for (int i = 0; i < path.Count; i++)
+        {
+            var origin = _nodes[path[i].origin];
+            int destinationIndex = path[i].destination;
+            for (int j = 0; j < origin.Connections.Count; j++)
+            {
+                if (origin.Connections[j].Destination == destinationIndex)
+                {
+                    time += origin.Connections[j].Time;
+                    break;
+                }
+            }
+        }
+        return time;
+    }
+
+    /// <summary>
+    /// Get the travel time for a given path
+    /// </summary>
+    /// <param name="path">The path in order to get the travel times from.</param>
+    /// <returns>The total travel time for the path.</returns>
+    public float GetTravelTime(List<int>? path)
+    {
+        if (path is null) return -1;
+        if (path.Count == 0) return 0f;
+
+        var time = 0.0f;
+        var origin = _nodes[path[0]];
+        for (int i = 1; i < path.Count; i++)
+        {
+            int destinationIndex = path[i];
+            for (int j = 0; j < origin.Connections.Count; j++)
+            {
+                if (origin.Connections[j].Destination == destinationIndex)
+                {
+                    time += origin.Connections[j].Time;
+                    break;
+                }
+            }
+            origin = _nodes[destinationIndex];
+        }
+        return time;
+    }
+
     private (HighwayType originRoadType, HighwayType destinationRoadType) GetRoadTypes(float x, float y, int nodeIndex)
     {
         HighwayType ret = HighwayType.NotRoad;
@@ -392,7 +447,7 @@ public sealed class Network
                 {
                     return GeneratePath(fastestParent, destinationNodeIndex);
                 }
-                // foreach (var childDestination in links)
+                
                 var nodeOffset = no[Destination];
                 for (int i = 0; i < lc[Destination]; i++)
                 {
@@ -479,6 +534,11 @@ public sealed class Network
     public float[] GetTimes()
     {
         return _links.Select(link => link.Time).ToArray();
+    }
+
+    public void SaveNetwork(string outputNetworkFile)
+    {
+        //throw new NotImplementedException();
     }
 }
 

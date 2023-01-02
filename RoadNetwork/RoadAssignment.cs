@@ -1,12 +1,15 @@
-﻿using static System.Collections.Specialized.BitVector32;
-
-namespace RoadNetwork;
+﻿namespace RoadNetwork;
 
 /// <summary>
 /// This class is used to generate congested times on the transit network
 /// </summary>
 public static class RoadAssignment
 {
+    /// <summary>
+    /// The grouping size of zones that each thread will process the results for
+    /// </summary>
+    private const int ChunkSize = 32;
+
     /// <summary>
     /// 
     /// </summary>
@@ -24,17 +27,23 @@ public static class RoadAssignment
         for (int i = 0; i < numberOfIterations; i++)
         {
             UpdateRoadPaths(zoneSystem, network, paths);
-            var gap = UpdateDemandOnLink(zoneSystem, paths, linkVolumes, i, demand);
-            ComputeUpdatedTravelTimes(network, linkVolumes, freeflowTimes);
-
+            var stepSize = i == 0 ? 1.0f : FindStepSize(paths, demand);
+            UpdateLinks(network, zoneSystem, demand, paths, linkVolumes, freeflowTimes, stepSize);
+            var rgap = paths.ComputeRelativeGap(network, demand);
             // If we have satisfied the gap, we can terminate.
-            if ((i > 0) && (gap < relativeGap))
+            if ((i > 0) && (rgap < relativeGap))
             {
                 break;
             }
-            paths.ClearPaths();
+            paths.UpdateForNextIteration();
         }
         return linkVolumes;
+    }
+
+    private static void UpdateLinks(Network network, ZoneSystem zoneSystem, Matrix demand, RoadPaths paths, float[] linkVolumes, float[] freeflowTimes, float stepSize)
+    {
+        UpdateDemandOnLink(zoneSystem, paths, linkVolumes, demand, stepSize);
+        ComputeUpdatedLinkTravelTimes(network, linkVolumes, freeflowTimes);
     }
 
     /// <summary>
@@ -53,12 +62,16 @@ public static class RoadAssignment
                 for (int j = 0; j < zoneSystem.Length; j++)
                 {
                     var destinationNode = zoneSystem.GetNodeForZoneIndex(j);
-                    var path = network.GetFastestPathDijkstra(originNode, destinationNode, cache.fastestPath, cache.dirtyBits);
+                    var path = network.GetFastestPathDijkstra((int)originNode, (int)destinationNode, cache.fastestPath, cache.dirtyBits);
                     var resultPath = paths.GetPath(originIndex, j);
                     if (path is null || path.Count <= 0)
                     {
+                        paths.GetCost(originIndex, j) = 0;
                         return cache;
                     }
+                    // Build our result path and get the travel time
+                    // before we update the road volumes
+                    paths.GetCost(originIndex, j) = network.GetTravelTime(path);
                     resultPath.Add(path[0].origin);
                     foreach (var (_, destination) in path)
                     {
@@ -66,11 +79,38 @@ public static class RoadAssignment
                     }
                 }
                 return cache;
-            }, (cache) =>
-            {
-                // do nothing for aggregation
-            }
+            },
+            DoNothing
         );
+    }
+
+    /// <summary>
+    /// Find the step size to use, only call this
+    /// after the first iteration has completed.
+    /// </summary>
+    /// <param name="paths">The path data</param>
+    /// <param name="demand">The demand matrix for the assignment</param>
+    /// <returns>The step size to apply to the network</returns>
+    private static float FindStepSize(RoadPaths paths, Matrix demand)
+    {
+        var min = 0.0f;
+        var max = 1.0f;
+        float current = 0.5f;
+        // This comes to 10 iterations since the space shrinks by half each time
+        const float epsilon = 0.001f;
+        while(max - min > epsilon)
+        {
+            current = 0.5f * (min + max);
+            if(paths.SumFirstDerivative(demand, current) > 0)
+            {
+                min = current;
+            }
+            else
+            {
+                max = current;
+            }
+        }
+        return current;
     }
 
     /// <summary>
@@ -80,19 +120,17 @@ public static class RoadAssignment
     /// <param name="paths"></param>
     /// <param name="linkVolumes"></param>
     /// <returns></returns>
-    private static float UpdateDemandOnLink(ZoneSystem zoneSystem, RoadPaths paths, float[] linkVolumes, int iterationNumber, Matrix demand)
+    private static void UpdateDemandOnLink(ZoneSystem zoneSystem, RoadPaths paths, float[] linkVolumes, Matrix demand, float alpha)
     {
-        var alpha = 2 / (iterationNumber + 2);
-        const int chunkSize = 32;
-        int numberOfChunks = (int)Math.Ceiling((double)zoneSystem.Length / (double)chunkSize);
+        int numberOfChunks = (int)Math.Ceiling((double)zoneSystem.Length / (double)ChunkSize);
         float[][] innerLinkVolumes = new float[numberOfChunks][];
         Parallel.For(0, numberOfChunks,
             (int chunkIndex) =>
             {
-                int endIndex = Math.Min(chunkIndex * (chunkSize + 1), zoneSystem.Length);
+                int endIndex = Math.Min(chunkIndex * (ChunkSize + 1), zoneSystem.Length);
                 innerLinkVolumes[chunkIndex] = new float[linkVolumes.Length];
                 float[] linkVolumeRow = innerLinkVolumes[chunkIndex];
-                for (int i = chunkIndex * chunkSize; i < endIndex; i++)
+                for (int i = chunkIndex * ChunkSize; i < endIndex; i++)
                 {
                     for (int j = 0; j < zoneSystem.Length; j++)
                     {
@@ -106,19 +144,6 @@ public static class RoadAssignment
                 }
             }
         );
-        var maxRelativeDifference = float.NegativeInfinity;
-        // Update the links and compute the relative gap
-        for (int j = 0; j < linkVolumes.Length; j++)
-        {
-            var oldValue = linkVolumes[j];
-            linkVolumes[j] = 0;
-            for (int i = 0; i < innerLinkVolumes.Length; i++)
-            {
-                linkVolumes[j] += innerLinkVolumes[i][j];
-            }
-            maxRelativeDifference = Math.Max(maxRelativeDifference, ((linkVolumes[j] - oldValue) / oldValue));
-        }
-        return maxRelativeDifference;
     }
 
     /// <summary>
@@ -127,8 +152,34 @@ public static class RoadAssignment
     /// <param name="network"></param>
     /// <param name="paths"></param>
     /// <param name="linkVolumes"></param>
-    private static void ComputeUpdatedTravelTimes(Network network, float[] linkVolumes, float[] freeFlowTimes)
+    private static void ComputeUpdatedLinkTravelTimes(Network network, float[] linkVolumes, float[] freeFlowTimes)
     {
         network.UpdateLinkTravelTimes(linkVolumes, freeFlowTimes);
+    }
+
+    /// <summary>
+    /// Use this for a delegate call that needs to consume something and then do nothing
+    /// </summary>
+    private static void DoNothing<T>(T _) {}
+
+    public static Matrix GetTravelTimes(Network network, ZoneSystem zoneSystem)
+    {
+        var ret = new Matrix(zoneSystem.Length);
+        Parallel.For(0, zoneSystem.Length,
+            () => network.GetCache(),
+            (i, _, cache) =>
+            {
+                var originNode = zoneSystem.GetNodeForZoneIndex(i);
+                for (int j = 0; j < zoneSystem.Length; j++)
+                {
+                    var destinationNode = (int)zoneSystem.GetNodeForZoneIndex(j);
+                    var path = network.GetFastestPathDijkstra((int)originNode, (int)destinationNode, cache.fastestPath, cache.dirtyBits);
+                    ret.Data[i * zoneSystem.Length + j] = network.GetTravelTime(path);
+                }
+                return cache;
+            },
+            DoNothing
+        );
+        return ret;
     }
 }

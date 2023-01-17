@@ -42,10 +42,10 @@ public sealed class Network
         // TOOD: Actually load in the links properly
         _lanes = new float[_links.Length];
         Array.Fill(_lanes, 1.0f);
-        (_capacity, _exponent)  = ComputeCapacity();
+        (_capacity, _exponent)  = ComputeCapacity(_lanes);
     }
 
-    private (float[] Capacity, float[] Exponent) ComputeCapacity()
+    private (float[] Capacity, float[] Exponent) ComputeCapacity(float[] lanes)
     {
         var capacity = new float[_links.Length];
         var exponent = new float[_links.Length];
@@ -57,25 +57,30 @@ public sealed class Network
                 case HighwayType.MotorwayLink:
                     capacity[i] = 2000.0f;
                     exponent[i] = 6.0f;
+                    lanes[i] = 4;
                     break;
                 case HighwayType.Trunk:
                 case HighwayType.TrunkLink:
                     capacity[i] = 2000.0f;
                     exponent[i] = 6.0f;
+                    lanes[i] = 3;
                     break;
                 case HighwayType.Primary:
                 case HighwayType.PrimaryLink:
                     capacity[i] = 1400.0f;
                     exponent[i] = 4.0f;
+                    lanes[i] = 2;
                     break;
                 case HighwayType.Secondary:
                 case HighwayType.SecondaryLink:
                     capacity[i] = 800.0f;
                     exponent[i] = 4.0f;
+                    lanes[i] = 2;
                     break;
                 default:
                     capacity[i] = 500.0f;
                     exponent[i] = 4.0f;
+                    lanes[i] = 1;
                     break;
             }
         }
@@ -90,14 +95,12 @@ public sealed class Network
         Link[]? _links = null;
         Parallel.Invoke(() =>
         {
-
             _nodeLookup = new RTree<int>();
             for (int i = 0; i < nodes.Count; i++)
             {
                 var node = nodes[i];
                 _nodeLookup.Add(new Rectangle(node.Lat, node.Lon, node.Lat, node.Lon, 0, 0), i);
             }
-
         }, () =>
         {
             (_nodeOffset, _linkCounts, _links) = CreateLinkTable(nodes);

@@ -1,4 +1,6 @@
 ﻿using RoadNetwork;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 // Make sure that we have the right number of arguments
 if(args.Length <= 5)
@@ -10,8 +12,8 @@ if(args.Length <= 5)
 var baseNetworkFile = args[0];
 var zoneSystemFile = args[1];
 var demandMatrixFile = args[2];
-var outputNetworkFile = args[4];
-var finalTravelTimesFile = args[5];
+var outputNetworkFile = args[3];
+var finalTravelTimesFile = args[4];
 
 var baseNetwork = new Network(baseNetworkFile);
 var zoneSystem = new ZoneSystem(zoneSystemFile);
@@ -24,3 +26,4 @@ var matrix = RoadAssignment.GetTravelTimes(baseNetwork, zoneSystem);
 matrix.Save(zoneSystem, finalTravelTimesFile);
 
 baseNetwork.SaveNetwork(outputNetworkFile);
+

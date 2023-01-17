@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GatherAWSData", "GatherAWSD
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadNetwork", "RoadNetwork\RoadNetwork.csproj", "{C377CE01-E120-437A-9CEA-1AB8FC3622E5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeCongestedTimes", "ComputeCongestedTimes\ComputeCongestedTimes.csproj", "{F06DF3ED-BFE4-4EC4-B9DA-4FF38FA45CF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeCongestedTimes", "ComputeCongestedTimes\ComputeCongestedTimes.csproj", "{F06DF3ED-BFE4-4EC4-B9DA-4FF38FA45CF1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

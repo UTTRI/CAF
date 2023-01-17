@@ -180,10 +180,7 @@ void ProcessRoadtimes(string directoryName, int day)
                     records[^1] = records[^1] with { EndPingIndex = i, NumberOfPings = clusterSize };
                 }
             }
-            /*if (device[0].DeviceID == "a201YWxhamRhajQxOjNraDkxdXVmNjNkbTI=")
-            {
-                Console.WriteLine("Debug Here");
-            }*/
+
             for (int i = startRecordIndex; i < records.Count; i++)
             {
                 var startingPoint = device[records[i - 1].EndPingIndex];

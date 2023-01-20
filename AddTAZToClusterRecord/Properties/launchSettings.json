@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AddTAZToClusterRecord": {
+      "commandName": "Project",
+      "commandLineArgs": " Z:\\Groups\\TMG\\Research\\2022\\CAF\\BuenosAires\\Shapefile\\buenosaires_zone_epsg4326.shp ZAT Z:\\Groups\\TMG\\Research\\2022\\CAF\\BuenosAires\\Days\\ProcessedRoadTimes.csv Z:\\Groups\\TMG\\Research\\2022\\CAF\\BuenosAires\\Days\\ProcessedRoadTimes-TAZ.csv"
+    }
+  }
+}

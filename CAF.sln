@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoadNetwork", "RoadNetwork\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeCongestedTimes", "ComputeCongestedTimes\ComputeCongestedTimes.csproj", "{F06DF3ED-BFE4-4EC4-B9DA-4FF38FA45CF1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AddTAZToClusterRecord", "AddTAZToClusterRecord\AddTAZToClusterRecord.csproj", "{FC38899B-5D01-4E3E-88EF-186A021D6925}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{F06DF3ED-BFE4-4EC4-B9DA-4FF38FA45CF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F06DF3ED-BFE4-4EC4-B9DA-4FF38FA45CF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F06DF3ED-BFE4-4EC4-B9DA-4FF38FA45CF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC38899B-5D01-4E3E-88EF-186A021D6925}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC38899B-5D01-4E3E-88EF-186A021D6925}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC38899B-5D01-4E3E-88EF-186A021D6925}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC38899B-5D01-4E3E-88EF-186A021D6925}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

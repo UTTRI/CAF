@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AddTAZToClusterRecord", "Ad
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreateDemandMatrices", "CreateDemandMatrices\CreateDemandMatrices.csproj", "{266F1918-3A2E-4BF0-B7C0-2C3942754AB6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CreateTravelTimeAnalysis", "CreateTravelTimeAnalysis\CreateTravelTimeAnalysis.csproj", "{DE66E445-1FEB-4CCA-B8C8-D5E7FE4AD922}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{266F1918-3A2E-4BF0-B7C0-2C3942754AB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{266F1918-3A2E-4BF0-B7C0-2C3942754AB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{266F1918-3A2E-4BF0-B7C0-2C3942754AB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE66E445-1FEB-4CCA-B8C8-D5E7FE4AD922}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE66E445-1FEB-4CCA-B8C8-D5E7FE4AD922}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE66E445-1FEB-4CCA-B8C8-D5E7FE4AD922}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE66E445-1FEB-4CCA-B8C8-D5E7FE4AD922}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

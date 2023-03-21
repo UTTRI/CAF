@@ -75,9 +75,9 @@
                                  Maximum="{Binding TotalDays, Mode=OneWay}" Value="{Binding DaysDownloaded, Mode=OneWay}" Margin="5" />
                     <ProgressBar Grid.Row="1" Grid.Column="1" Minimum="0"
                                  Maximum="{Binding TotalDays, Mode=OneWay}" Value="{Binding DaysChunked, Mode=OneWay}" Margin="5" />
-                    <ui:Button Grid.Row="2" Grid.Column="2"  IsEnabled="{Binding CanRun, Mode=OneWay}"
-                            HorizontalAlignment="Right" Click="StartProcessing_Click" Margin="5" Width="50"
-                               Icon="Play32"/>
+                    <ui:Button Grid.Row="2" Grid.Column="2" Style="{StaticResource RunButton}" IsEnabled="{Binding CanRun}"
+                            HorizontalAlignment="Right" Click="StartProcessing_Click"
+                              />
                 </Grid>
             </ui:Card>
         </Grid>

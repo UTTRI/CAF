@@ -22,7 +22,12 @@ namespace CellphoneProcessor.AWS
                 IsEnabled = false;
                 try
                 {
+                    await vm.Save();
                     await vm.StartProcessingAsync();
+                }
+                catch(Exception ex)
+                {
+                    System.Windows.MessageBox.Show(MainWindow.Shared, ex.Message + "\r\n" + ex.StackTrace, "Error Downloading", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
                 {

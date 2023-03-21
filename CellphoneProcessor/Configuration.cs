@@ -42,37 +42,41 @@ public sealed class Configuration
             }
             return false;
         }
-
-        Utf8JsonReader reader = new(File.ReadAllBytes(configFile));
-        while (reader.Read())
+        try
         {
-            if(reader.TokenType == JsonTokenType.PropertyName)
+            Utf8JsonReader reader = new(File.ReadAllBytes(configFile));
+            while (reader.Read())
             {
-                var subsystem = reader.GetString() ?? ThrowInvalidConfig();
-                var parameters = new Dictionary<string, string>();
-                _parameters[subsystem] = parameters;
-                if (!ReadPastComments(ref reader)) ThrowInvalidConfig();
-                if (reader.TokenType != JsonTokenType.StartObject) ThrowInvalidConfig();
-                string? parameterName = null;
-                while(ReadPastComments(ref reader) && reader.TokenType != JsonTokenType.EndObject)
+                if (reader.TokenType == JsonTokenType.PropertyName)
                 {
-                    switch(reader.TokenType)
+                    var subsystem = reader.GetString() ?? ThrowInvalidConfig();
+                    var parameters = new Dictionary<string, string>();
+                    _parameters[subsystem] = parameters;
+                    if (!ReadPastComments(ref reader)) ThrowInvalidConfig();
+                    if (reader.TokenType != JsonTokenType.StartObject) ThrowInvalidConfig();
+                    string? parameterName = null;
+                    while (ReadPastComments(ref reader) && reader.TokenType != JsonTokenType.EndObject)
                     {
-                        case JsonTokenType.PropertyName:
-                            parameterName = reader.GetString() ?? ThrowInvalidConfig();
-                            break;
-                        case JsonTokenType.String:
-                            if (parameterName is null) ThrowInvalidConfig();
-                            parameters[parameterName] = reader.GetString() ?? ThrowInvalidConfig();
-                            parameterName = null;
-                            break;
-                        default:
-                            ThrowInvalidConfig();
-                            break;
-                    }                   
+                        switch (reader.TokenType)
+                        {
+                            case JsonTokenType.PropertyName:
+                                parameterName = reader.GetString() ?? ThrowInvalidConfig();
+                                break;
+                            case JsonTokenType.String:
+                                if (parameterName is null) ThrowInvalidConfig();
+                                parameters[parameterName] = reader.GetString() ?? ThrowInvalidConfig();
+                                parameterName = null;
+                                break;
+                            default:
+                                ThrowInvalidConfig();
+                                break;
+                        }
+                    }
                 }
             }
         }
+        catch
+        { }
     }
 
     /// <summary>
@@ -93,8 +97,9 @@ public sealed class Configuration
         // make sure that only one call to save can happen at the same time
         lock (this)
         {
-            using var stream = new BufferedStream(File.OpenWrite(_configFile));
-            Utf8JsonWriter writer = new(stream);
+            using var baseStream = File.OpenWrite(_configFile);
+            using var stream = new BufferedStream(baseStream);
+            using Utf8JsonWriter writer = new(stream);
             writer.WriteStartObject();
             foreach (var parameter in _parameters)
             {

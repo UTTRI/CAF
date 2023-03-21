@@ -140,12 +140,13 @@ public sealed class AWSViewModel : INotifyPropertyChanged
     /// <summary>
     /// 
     /// </summary>
-    public void Save()
+    public Task Save()
     {
         var parameters = Configuration.Shared.GetParameters(nameof(AWSViewModel));
         parameters[nameof(AWSKey)] = AWSKey;
         parameters[nameof(AWSSecret)] = AWSSecret;
         parameters[nameof(BucketName)] = BucketName;
+        return Task.Run(() => { Configuration.Shared.Save(); });
     }
 
     public async Task StartProcessingAsync()

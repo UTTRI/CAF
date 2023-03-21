@@ -74,6 +74,10 @@ public static class GetAWSData
                     fileNames[i] = csvName;
                 }
             });
+            if (fileNames.Length == 0)
+            {
+                throw new Exception($"There was no data downloaded for day {day}.");
+            }
             updateCurrentDateDownloaded(day);
             ChunkFiles(fileNames);
             updateCurrentDateChunked(day);
@@ -101,7 +105,6 @@ public static class GetAWSData
                                     ? Entry.LoadEntries(fileName)
                                     : new Dictionary<string, List<Entry>>();
             });
-
             var combineIn = fileEntries[0];
             for (int i = 1; i < fileEntries.Length; i++)
             {

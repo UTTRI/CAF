@@ -7,7 +7,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:aws="clr-namespace:CellphoneProcessor.AWS"
         xmlns:ct="clr-namespace:CellphoneProcessor.CreateTrips"
-        mc:Ignorable="d" ResizeMode="NoResize"
+        mc:Ignorable="d"
         Title="MainWindow" SnapsToDevicePixels="True"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Tabbed">
@@ -27,8 +27,8 @@
         <ui:TitleBar
             Title="Cellphone Processor"
             Grid.Row="0" Grid.Column="1"
-            >
-        </ui:TitleBar>
+            />
+
         <ui:NavigationCompact Grid.Column="0" Grid.Row="1"
                             Frame="{Binding ElementName=RootFrame, Mode=OneWay}"
                             x:Name="RootNavigation" IsExpanded="False"
@@ -77,7 +77,9 @@
                     VerticalAlignment="Top"
                     FontSize="14"
                     Navigation="{Binding ElementName=RootNavigation, Mode=OneWay}" />
-                <Frame x:Name="RootFrame" Grid.Row="1"/>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Visible">
+                    <Frame x:Name="RootFrame"/>
+                </ScrollViewer>
             </Grid>
         </Border>
     </Grid>

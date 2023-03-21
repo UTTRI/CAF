@@ -4,19 +4,32 @@
              xmlns:local="clr-namespace:CellphoneProcessor"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              StartupUri="MainWindow.xaml">
-        <Application.Resources>
-            <ResourceDictionary>
-                <ResourceDictionary.MergedDictionaries>
-                    <ui:ThemesDictionary Theme="Dark" />
-                    <ui:ControlsDictionary />
-                </ResourceDictionary.MergedDictionaries>
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
 
             <Style x:Key="AccentTextBlock" TargetType="{x:Type TextBlock}">
                 <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
-                
+            <Style x:Key="RunButton" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource DefaultUiButtonStyle}">
+                <Setter Property="Margin" Value="5" />
+                <Setter Property="Width" Value="50" />
+                <Setter Property="Icon" Value="Play32" />
+                <Setter Property="IconFilled" Value="True" />
+                <Setter Property="Background" Value="DarkGray" />
+                <Style.Triggers>
+                    <Trigger Property="IsEnabled" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                        <Setter Property="MouseOverBackground" Value="{DynamicResource SystemAccentColorSecondaryBrush}" />
+                        <Setter Property="PressedBackground" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
-        </Application.Resources>
+    </Application.Resources>
 </Application>

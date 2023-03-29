@@ -7,3 +7,5 @@ global using System.IO.Compression;
 global using System.Linq;
 global using System.Threading.Tasks;
 global using System.Threading;
+global using System.Collections.ObjectModel;
+global using System.Runtime.CompilerServices;

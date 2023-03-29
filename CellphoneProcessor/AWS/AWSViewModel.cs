@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Amazon.S3.Model;
+using System.Runtime.CompilerServices;
 
 namespace CellphoneProcessor.AWS;
 
@@ -108,6 +109,31 @@ public sealed class AWSViewModel : INotifyPropertyChanged
         }
     }
 
+    public string Prefix
+    {
+        get => _prefix;
+        set
+        {
+            _prefix = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Prefix)));
+        }
+    }
+
+    public string PrefixToolText { get; } = "For Bogota this is 'norm_data/co'";
+
+
+    public string AreaName
+    {
+        get => _areaName;
+        set
+        {
+            _areaName = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AreaName)));
+        }
+    }
+
+    public string AreaNameToolText { get; } = "For Bogota this is empty ('')";
+
     private void UpdateTotalDays()
     {
         TotalDays = DateTime.DaysInMonth(SurveyDate.Year, SurveyDate.Month);
@@ -119,6 +145,8 @@ public sealed class AWSViewModel : INotifyPropertyChanged
         Configuration.TryUpdateValue(parameters, nameof(AWSKey), ref _awsKey);
         Configuration.TryUpdateValue(parameters, nameof(AWSSecret), ref _awsSecret);
         Configuration.TryUpdateValue(parameters, nameof(BucketName), ref _bucketName);
+        Configuration.TryUpdateValue(parameters, nameof(Prefix), ref _prefix);
+        Configuration.TryUpdateValue(parameters, nameof(AreaName), ref _areaName);
         UpdateTotalDays();
         UpdateAndValidateParameters();
     }
@@ -156,8 +184,8 @@ public sealed class AWSViewModel : INotifyPropertyChanged
         // var prefix = "norm_data";
         // var areaName = "greater_bogota_metropolitan_area_co";
         // var prefix = "norm_data/co";
-        var areaName = "";
-        var prefix = "norm_data/pa";
+        // var areaName = "";
+        // var prefix = "norm_data/pa";
         // var areaName = "greater_buenos_aires_ar";
         // var prefix = "norm_data/ar";
         // var year = 2019;
@@ -166,8 +194,8 @@ public sealed class AWSViewModel : INotifyPropertyChanged
         await GetAWSData.MainAsync(
             new AWSConfig(_awsKey, _awsSecret, _bucketName),
             DownloadFolder,
-            areaName,
-            prefix,
+            AreaName,
+            Prefix,
             SurveyDate.Year,
             SurveyDate.Month,
             (currentDay) => DaysDownloaded = currentDay,
@@ -184,6 +212,8 @@ public sealed class AWSViewModel : INotifyPropertyChanged
     private bool _canRun = false;
     private int _daysDownloaded = 0;
     private int _daysChunked;
+    private string _prefix = string.Empty;
+    private string _areaName = string.Empty;
     #endregion
 
     public event PropertyChangedEventHandler? PropertyChanged;

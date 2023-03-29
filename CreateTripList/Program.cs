@@ -8,9 +8,10 @@ Create trip list for cellphone data
     record per trip 
  */
 
-string stayRecordFile = @"Z:\Groups\TMG\Research\2022\CAF\Bogota\Days\ProcessedRoadTimes-WithTAZ.csv";
-string outputFile = @"Z:\Groups\TMG\Research\2022\CAF\Bogota\Days\Trips.csv";
-int hourlyOffset = -5;
+string stayRecordFile = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\Days\ProcessedRoadTimes-WithTAZ.csv";
+string outputFile = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\Days\Trips.csv";
+var hourlyOffset = -3; // BuenosAires
+//var hourlyOffset = -5; // Bogota + Panama
 
 Time GetTime(long ts)
 {

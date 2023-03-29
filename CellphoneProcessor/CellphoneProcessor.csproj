@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="CreateTrips\CreateStaysPage.xaml.cs">
+    <Compile Update="Create\CreateStaysPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

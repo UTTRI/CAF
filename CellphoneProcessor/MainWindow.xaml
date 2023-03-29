@@ -37,6 +37,7 @@
             <ui:NavigationCompact.Items>
                 <ui:NavigationItem
                     Content="Start"
+                    ToolTip="Start"
                     Icon="Home24"
                     PageType="{x:Type local:HomePage}"
                     PageTag="Start"
@@ -45,21 +46,25 @@
                     />
                 <ui:NavigationItem x:Name="AWSDownload"
                     Content="AWS Download"
+                    ToolTip="AWS Download"
                     Icon="ArrowDownload24"
                     PageType="{x:Type aws:AWSDownloadPage}"
                     PageTag="AWSDownload" />
                 <ui:NavigationItem x:Name="CreateStays"
                     Content="Create Stays"
+                    ToolTip="Create Stays"
                     Icon="BuildingHome24"
                     PageType="{x:Type ct:CreateStaysPage}"
                     PageTag="Stays" />
                 <ui:NavigationItem x:Name="CreateTrips"
                     Content="Create Trips"
+                    ToolTip="Create Trips"
                     Icon="VehicleSubway24"
                     PageType="{x:Type ct:CreateTripsPage}"
                     PageTag="Trips" />
                 <ui:NavigationItem x:Name="CompareTrips"
-                    Content="Create Trips"
+                    Content="Compare Trips"
+                    ToolTip="Compare Trips"
                     Icon="BranchCompare24"
                     PageType="{x:Type comp:CompareTripGenerationPage}"
                     PageTag="CompareTrips" />

@@ -28,7 +28,7 @@ IEnumerable<Trip> ReadTrips(string recordsPath)
     using var reader = new StreamReader(recordsPath);
     string? line = reader.ReadLine(); // burn the header
     // Storage for the last stay for each device
-    Dictionary<string, (float Lat, float Lon, long EndTime)> lastStay = new();
+    Dictionary<string, (float Lat, float Lon, long EndTime, int taz)> lastStay = new();
     // writer.WriteLine("DeviceId,Lat,Long,hAccuracy,StartTime,EndTime,TravelTime,RoadDistance,Distance,Pings,OriginRoadType,DestinationRoadType,TAZ");
     while ((line = reader.ReadLine()) is not null)
     {
@@ -43,12 +43,12 @@ IEnumerable<Trip> ReadTrips(string recordsPath)
             int taz = int.Parse(split[12]);
             if (taz >= 0 && lastStay.TryGetValue(device, out var stay))
             {
-                yield return new Trip(device, stay.Lat, stay.Lon, lat, lon, GetTime(stay.EndTime));
+                yield return new Trip(device, stay.Lat, stay.Lon, lat, lon, stay.taz, taz, GetTime(stay.EndTime));
             }
             // If the record was inside of the zone system, store it
             if (taz >= 0)
             {
-                lastStay[device] = (lat, lon, endTime);
+                lastStay[device] = (lat, lon, endTime, taz);
             }
             else
             {
@@ -61,7 +61,7 @@ IEnumerable<Trip> ReadTrips(string recordsPath)
 }
 
 using var writer = new StreamWriter(outputFile);
-writer.WriteLine("DeviceId,OriginLat,OriginLon,DestinationLat,DestinationLon,TripStartTime");
+writer.WriteLine("DeviceId,OriginLat,OriginLon,DestinationLat,DestinationLon,OriginTaz,DestinationTaz,TripStartTime");
 
 foreach (var record in ReadTrips(stayRecordFile))
 {
@@ -75,6 +75,10 @@ foreach (var record in ReadTrips(stayRecordFile))
     writer.Write(',');
     writer.Write(record.DestinationLon);
     writer.Write(',');
+    writer.Write(record.OriginTaz);
+    writer.Write(',');
+    writer.Write(record.DestinationTaz);
+    writer.Write(',');
     writer.WriteLine($"{record.TripTime.Hour:00}:{record.TripTime.Minute:00}:{record.TripTime.Second:00}");
 }
 
@@ -85,4 +89,4 @@ struct Time
     public byte Second;
 }
 
-record struct Trip(string Device, float OriginLat, float OriginLon, float DestinationLat, float DestinationLon, Time TripTime);
+record struct Trip(string Device, float OriginLat, float OriginLon, float DestinationLat, float DestinationLon, int OriginTaz, int DestinationTaz, Time TripTime);

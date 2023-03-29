@@ -18,14 +18,27 @@ using HomeLocation;
 using System.Collections.Concurrent;
 
 var processedWithTAZFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\Days\ProcessedRoadTimes-WithTAZ.csv";
-const bool ThrowOutTAZNegativeOne = false;
+const bool ThrowOutTAZNegativeOne = true;
 var outputFileLocation = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\Days\HomeZone-" + (ThrowOutTAZNegativeOne ? "ExcludeOutsidePings" : "IncludeOutsidePings") + ".csv";
+
+
+var shapeFilePath = args.Length != 0 ? args[0] : @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\Shapefile\BuenosAires_zone_epsg4326.shp";
+//var shapeFilePath = args.Length != 0 ? args[0] : @"Z:\Groups\TMG\Research\2022\CAF\Panama\Shapefile\panama_zone_epsg4326.shp";
+//var shapeFilePath = args.Length != 0 ? args[0] : @"Z:\Groups\TMG\Research\2022\CAF\Bogota\Shapefile\bogata_zone_epsg4326.shp";
+
+var tazName = args.Length != 0 ? args[1] : "ZAT"; // BuenosAires + Bogota
+// var tazName = args.Length != 0 ? args[1] : "Zona_PIMUS"; // Panama
+
+Console.WriteLine("Loading Zone System...");
+ZoneSystem zoneSystem = new(shapeFilePath, tazName);
+Console.WriteLine("Finished loading zone system");
+
 
 const int HourOffset = -3; // BuenosAires
 //const int HourOffset = -5; // Bogota + Panama
 
 // Main Variables
-ConcurrentBag<(string DeviceId, double Lat, double Lon, int stays, int clusters)> completedRecords = new();
+ConcurrentBag<(string DeviceId, double Lat, double Lon, int Taz, int stays, int clusters)> completedRecords = new();
 BlockingCollection<DeviceRecords> deviceRecords = new(Environment.ProcessorCount * 2);
 
 // Setup a task to load in the devices from file
@@ -87,36 +100,31 @@ Task.Run(() =>
 // the DBSCAN algorithm on each device, allowing each one
 // to be generated in parallel
 int numberOfDevices = 0;
-foreach (var device in deviceRecords.GetConsumingEnumerable())
+
+/*foreach (var device in deviceRecords.GetConsumingEnumerable())
 {
     numberOfDevices++;
     var homeLocation = DBSCAN.GetHouseholdZone(device.Points);
     completedRecords.Add((device.DeviceId, homeLocation.Lat, homeLocation.Lon,
-        device.Points.Count, homeLocation.clusters));
-}
+         //GetTaz(homeLocation.Lat, homeLocation.Lon), device.Points.Count, homeLocation.clusters));
+         0, device.Points.Count, homeLocation.clusters));
+}*/
 
-Console.WriteLine("Processed Devices: " + numberOfDevices);
-
-
-/*Parallel.ForEach(deviceRecords.GetConsumingEnumerable(), (device) =>
+Parallel.ForEach(deviceRecords.GetConsumingEnumerable(), (device) =>
 {
+    Interlocked.Increment(ref numberOfDevices);
     var homeLocation = DBSCAN.GetHouseholdZone(device.Points);
     completedRecords.Add((device.DeviceId, homeLocation.Lat, homeLocation.Lon,
-        device.Points.Count, homeLocation.clusters));
-});*/
+        GetTaz(homeLocation.Lat, homeLocation.Lon), device.Points.Count, homeLocation.clusters));
+});
 
-
-/*foreach (var device in deviceRecords.GetConsumingEnumerable())
-{
-    var homeLocation = DBSCAN.GetHouseholdZone(device.Points);
-    completedRecords.Add((device.DeviceId, homeLocation.Lat, homeLocation.Lon));
-}*/
+Console.WriteLine("Processed Devices: " + numberOfDevices);
 
 // Now that all of the records have finished write out the results to file
 Console.WriteLine("Writing the results out to file.");
 using var writer = new StreamWriter(outputFileLocation);
-writer.WriteLine("DeviceId,Lat,Lon,Stays,Clusters");
-foreach (var (DeviceId, Lat, Lon, Stays, Clusters) in from x in completedRecords
+writer.WriteLine("DeviceId,Lat,Lon,Taz,Stays,Clusters");
+foreach (var (DeviceId, Lat, Lon, Taz, Stays, Clusters) in from x in completedRecords
                                                       orderby x.DeviceId
                                                       select x)
 {
@@ -125,6 +133,8 @@ foreach (var (DeviceId, Lat, Lon, Stays, Clusters) in from x in completedRecords
     writer.Write(Lat);
     writer.Write(',');
     writer.Write(Lon);
+    writer.Write(',');
+    writer.Write(Taz);
     writer.Write(',');
     writer.Write(Stays);
     writer.Write(',');
@@ -145,6 +155,11 @@ int TSToHour(long ts)
     var seconds = DateTime.UnixEpoch + TimeSpan.FromSeconds(ts);
     var hour = (seconds.Hour + HourOffset) % 24;
     return hour >= 0 ? hour : hour + 24;
+}
+
+int GetTaz(double lat, double lon)
+{
+    return zoneSystem.GetTaz(lat, lon);
 }
 
 

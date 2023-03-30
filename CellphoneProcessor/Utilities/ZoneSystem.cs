@@ -2,7 +2,7 @@
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 
-namespace HomeLocation;
+namespace CellphoneProcessor.Utilities;
 
 internal sealed class ZoneSystem
 {
@@ -13,7 +13,7 @@ internal sealed class ZoneSystem
     {
         (var zoneSystem, _tazNumber) = ReadShapeFile(shapeFile, tazFieldName);
         _zoneSystemLocator = zoneSystem.Select(z => new IndexedPointInAreaLocator(z)).ToArray();
-                          
+
     }
 
     private static (Polygon[], int[] tazNumber) ReadShapeFile(string path, string tazFieldName)

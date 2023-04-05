@@ -1,0 +1,51 @@
+﻿<Page x:Class="CellphoneProcessor.CreateTrips.CreateFeaturesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:CellphoneProcessor.Create"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      mc:Ignorable="d" IsEnabled="{Binding IsRunning}"
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="CreateFeaturesPage">
+    <Page.DataContext>
+        <local:CreateFeaturesViewModel/>
+    </Page.DataContext>
+    <StackPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="AUTO" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="AUTO" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="OTP Server" Foreground="White" />
+            <TextBox   Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding OTPServerName}" HorizontalAlignment="Stretch" />
+            <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="OTP Router Name" Foreground="White" />
+            <TextBox   Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding OTPRouterName}" HorizontalAlignment="Stretch" />
+            <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="OTP Server Threads" Foreground="White" />
+            <ui:NumberBox Grid.Row="2" Grid.Column="1" Margin="5" Text="{Binding OTPServerThreads}" HorizontalAlignment="Stretch" IntegersOnly="True" />
+            <TextBlock Grid.Row="3" Grid.Column="0" Margin="5" Text="Trip File Path" Foreground="White" />
+            <TextBox   Grid.Row="3" Grid.Column="1" Margin="5" Text="{Binding TripFilePath}" HorizontalAlignment="Stretch" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Margin="5" Text="OutputFilePath" Foreground="White" />
+            <TextBox   Grid.Row="4" Grid.Column="1" Margin="5" Text="{Binding OutputFilePath}" HorizontalAlignment="Stretch" />
+        </Grid>
+        <ui:Button Style="{StaticResource RunButton}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                IsEnabled="{Binding CanRun}" Margin="5"
+                Click="TestCode_Clicked" />
+        <ProgressBar x:Name="RunBar" HorizontalAlignment="Stretch" Minimum="0" Maximum="{Binding NumberOfRecords, Mode=OneWay}"
+                     Value="{Binding ProcessedRecords}" Margin="5" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
+            <TextBlock Text="{Binding ProcessedRecords}" Foreground="White" />
+            <TextBlock Text=" of " Foreground="White"/>
+            <TextBlock Text="{Binding NumberOfRecords}" Foreground="White"/>
+        </StackPanel>
+        <TextBlock Text="{Binding EstimatedTimeRemaining}" Margin="5" Foreground="White" HorizontalAlignment="Center"/>
+    </StackPanel>
+</Page>

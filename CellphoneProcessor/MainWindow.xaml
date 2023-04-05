@@ -62,6 +62,12 @@
                     Icon="VehicleSubway24"
                     PageType="{x:Type ct:CreateTripsPage}"
                     PageTag="Trips" />
+                <ui:NavigationItem x:Name="CreateFeatures"
+                    Content="Create Features"
+                    ToolTip="Create Features"
+                    Icon="List24"
+                    PageType="{x:Type ct:CreateFeaturesPage}"
+                    PageTag="CreateFeatures" />
                 <ui:NavigationItem x:Name="CompareTrips"
                     Content="Compare Trips"
                     ToolTip="Compare Trips"

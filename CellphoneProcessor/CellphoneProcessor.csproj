@@ -18,6 +18,9 @@
     <Compile Update="Create\CreateStaysPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Create\CreateFeaturesPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

@@ -31,11 +31,11 @@
             <ColumnDefinition Width="AUTO"/>
         </Grid.ColumnDefinitions>
         <!-- Chunk Folder -->
-        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Chunk Folder" />
+        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Chunk Folder" VerticalAlignment="Center" />
         <TextBox   Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding ChunkFolder}" />
         <ui:Button Grid.Row="0" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="ChunkFolder_Click" ToolTip="Select the Chunk folder." />
         <!-- Shape file -->
-        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="ShapeFile" />
+        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="ShapeFile" VerticalAlignment="Center"/>
         <TextBox   Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding ShapeFile}" />
         <ui:Button Grid.Row="1" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="ShapeFile_Click" ToolTip="Select the Shapefile."/>
         <!-- TAZ Column -->
@@ -45,7 +45,7 @@
                   ItemsSource="{Binding ShapeFileColumns, Mode=OneWay}"
                   SelectedValue="{Binding TAZColumn}"/>
         <!-- Road Network -->
-        <TextBlock Grid.Row="3" Grid.Column="0" Margin="5" Text="Road Network" />
+        <TextBlock Grid.Row="3" Grid.Column="0" Margin="5" Text="Road Network" VerticalAlignment="Center"/>
         <TextBox   Grid.Row="3" Grid.Column="1" Margin="5" Text="{Binding RoadNetwork}" />
         <ui:Button Grid.Row="3" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="RoadNetwork_Click" ToolTip="Select the Road Network file."/>
         <!-- Output File location -->
@@ -58,19 +58,19 @@
                    Style="{StaticResource RunButton}" ToolTip="Create the stays."
                    Click="StartRun_Click"/>
         <!-- Progress Bars -->
-        <TextBlock Grid.Row="6" Grid.Column="0" Margin="5" Text="Clustering Pings" />
+        <TextBlock Grid.Row="6" Grid.Column="0" Margin="5" Text="Clustering Pings" VerticalAlignment="Center" />
         <ProgressBar Grid.Row="6" Grid.Column="1" Margin="5" Minimum="0" 
                      Maximum="{Binding FoldersToProcess, Mode=OneWay}"
                      Value="{Binding CurrentFolder, Mode=OneWay}"/>
-        <TextBlock Grid.Row="7" Grid.Column="0" Margin="5" Text="Updating TAZ"  />
+        <TextBlock Grid.Row="7" Grid.Column="0" Margin="5" Text="Updating TAZ"  VerticalAlignment="Center"/>
         <ProgressBar Grid.Row="7" Grid.Column="1" Margin="5" Minimum="0" 
                      Maximum="{Binding NumberOfDevices, Mode=OneWay}"
                      Value="{Binding CurrentTAZ, Mode=OneWay}"/>
-        <TextBlock Grid.Row="8" Grid.Column="0" Margin="5" Text="Road Times"  />
+        <TextBlock Grid.Row="8" Grid.Column="0" Margin="5" Text="Road Times"  VerticalAlignment="Center"/>
         <ProgressBar Grid.Row="8" Grid.Column="1" Margin="5" Minimum="0" 
                      Maximum="{Binding NumberOfDevices, Mode=OneWay}"
                      Value="{Binding CurrentRoad, Mode=OneWay}"/>
-        <TextBlock Grid.Row="9" Grid.Column="0" Margin="5" Text="Saving"  />
+        <TextBlock Grid.Row="9" Grid.Column="0" Margin="5" Text="Saving"  VerticalAlignment="Center"/>
         <ProgressBar Grid.Row="9" Grid.Column="1" Margin="5" Minimum="0" 
                      Maximum="{Binding NumberOfDevices, Mode=OneWay}"
                      Value="{Binding CurrentWriting, Mode=OneWay}"/>

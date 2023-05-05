@@ -186,7 +186,7 @@ internal static class CreateStays
         int IndexOfCollision(float x, float y)
         {
             // For some reason the map has lat and long inverted
-            var point = new Coordinate(y, x);
+            var point = new Coordinate(x, y);
             for (int i = 0; i < zoneSystem.Length; i++)
             {
                 var test = zoneSystem[i].Locate(point);

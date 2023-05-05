@@ -26,15 +26,15 @@
             <ColumnDefinition Width="AUTO" />
         </Grid.ColumnDefinitions>
         <!-- StaysPath  -->
-        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Stays File" />
+        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Stays File" VerticalAlignment="Center"/>
         <TextBox   Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding StaysFilePath}" />
         <ui:Button Grid.Row="0" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24"
                    Click="StaysFilePath_Click" ToolTip="Select the Stays File to read." />
         <!-- Hourly Offset -->
-        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="GMT Hourly offset" />
+        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="GMT Hourly offset" VerticalAlignment="Center"/>
         <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="5" IntegersOnly="True" Value="{Binding HourlyOffset}" ToolTip="The offset compared to GMT for the data." />
         <!-- Output Path -->
-        <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="Output File" />
+        <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="Output File" VerticalAlignment="Center"/>
         <TextBox   Grid.Row="2" Grid.Column="1" Margin="5" Text="{Binding OutputPath}" />
         <ui:Button Grid.Row="2" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24"
                    Click="OutputFilePath_Click" ToolTip="The path to save the trips file to." />
@@ -43,7 +43,7 @@
                    Style="{StaticResource RunButton}" ToolTip="Create the trips."
                    Click="StartRun_Click"/>
         <!-- Progress Bars -->
-        <TextBlock Grid.Row="4" Grid.Column="0" Margin="5" Text="Progress" />
+        <TextBlock Grid.Row="4" Grid.Column="0" Margin="5" Text="Progress" VerticalAlignment="Center"/>
         <ProgressBar Grid.Row="4" Grid.Column="1" Minimum="0" Margin="5"
                      Maximum="{Binding ProgressTotal, Mode=OneWay}" 
                      Value="{Binding ProgressCurrent, Mode=OneWay}" />

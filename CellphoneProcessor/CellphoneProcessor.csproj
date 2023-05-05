@@ -15,6 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RoadNetwork\RoadNetwork.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Create\CreateStaysPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

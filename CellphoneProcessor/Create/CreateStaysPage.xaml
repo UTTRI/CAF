@@ -4,10 +4,75 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:CellphoneProcessor.Create"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="CreateTripsPage">
-    <Grid>
-        
+      Title="CreateTripsPage" Foreground="White" IsEnabled="{Binding PageEnabled}">
+    <Page.DataContext>
+        <local:CreateStaysViewModel />
+    </Page.DataContext>
+    <Grid HorizontalAlignment="Stretch">
+        <!-- 3 columns with the middle  -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+            <RowDefinition Height="AUTO"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="AUTO"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="AUTO"/>
+        </Grid.ColumnDefinitions>
+        <!-- Chunk Folder -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Chunk Folder" />
+        <TextBox   Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding ChunkFolder}" />
+        <ui:Button Grid.Row="0" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="ChunkFolder_Click" ToolTip="Select the Chunk folder." />
+        <!-- Shape file -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="ShapeFile" />
+        <TextBox   Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding ShapeFile}" />
+        <ui:Button Grid.Row="1" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="ShapeFile_Click" ToolTip="Select the Shapefile."/>
+        <!-- TAZ Column -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="TAZ Column" />
+        <ComboBox Grid.Row="2" Grid.Column="1" Margin="5" 
+                  x:Name="Box"
+                  ItemsSource="{Binding ShapeFileColumns, Mode=OneWay}"
+                  SelectedValue="{Binding TAZColumn}"/>
+        <!-- Road Network -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Margin="5" Text="Road Network" />
+        <TextBox   Grid.Row="3" Grid.Column="1" Margin="5" Text="{Binding RoadNetwork}" />
+        <ui:Button Grid.Row="3" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="RoadNetwork_Click" ToolTip="Select the Road Network file."/>
+        <!-- Output File location -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Margin="5" Text="Output Location" />
+        <TextBox Grid.Row="4" Grid.Column="1" Margin="5" Text="{Binding OutputFile}"/>
+        <ui:Button Grid.Row="4" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}"
+                   Icon="Folder24" Click="OutputFile_Click"/>
+        <!-- Run Button -->
+        <ui:Button Grid.Row="5" Grid.Column="2" IsEnabled="{Binding ReadyToRun, Mode=OneWay}"
+                   Style="{StaticResource RunButton}" ToolTip="Create the stays."
+                   Click="StartRun_Click"/>
+        <!-- Progress Bars -->
+        <TextBlock Grid.Row="6" Grid.Column="0" Margin="5" Text="Clustering Pings" />
+        <ProgressBar Grid.Row="6" Grid.Column="1" Margin="5" Minimum="0" 
+                     Maximum="{Binding FoldersToProcess, Mode=OneWay}"
+                     Value="{Binding CurrentFolder, Mode=OneWay}"/>
+        <TextBlock Grid.Row="7" Grid.Column="0" Margin="5" Text="Updating TAZ"  />
+        <ProgressBar Grid.Row="7" Grid.Column="1" Margin="5" Minimum="0" 
+                     Maximum="{Binding NumberOfDevices, Mode=OneWay}"
+                     Value="{Binding CurrentTAZ, Mode=OneWay}"/>
+        <TextBlock Grid.Row="8" Grid.Column="0" Margin="5" Text="Road Times"  />
+        <ProgressBar Grid.Row="8" Grid.Column="1" Margin="5" Minimum="0" 
+                     Maximum="{Binding NumberOfDevices, Mode=OneWay}"
+                     Value="{Binding CurrentRoad, Mode=OneWay}"/>
+        <TextBlock Grid.Row="9" Grid.Column="0" Margin="5" Text="Saving"  />
+        <ProgressBar Grid.Row="9" Grid.Column="1" Margin="5" Minimum="0" 
+                     Maximum="{Binding NumberOfDevices, Mode=OneWay}"
+                     Value="{Binding CurrentWriting, Mode=OneWay}"/>
     </Grid>
 </Page>

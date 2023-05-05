@@ -24,5 +24,11 @@ public class ProgressUpdate : INotifyPropertyChanged
         }
     }
 
+    public ProgressUpdate()
+    {
+        _current = 0;
+        _total = 1;
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 }

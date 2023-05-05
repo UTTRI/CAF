@@ -34,8 +34,8 @@ var year = 2019;
 var month = 9;
 
 Console.WriteLine("Loading road network...");
-Network network = new(networkFilePath);
 
+Network network = new(networkFilePath);
 ConcurrentDictionary<string, List<ProcessedRecord>> records = new();
 
 void ProcessRoadtimes(string directoryName, int day, bool isTheLastDay)

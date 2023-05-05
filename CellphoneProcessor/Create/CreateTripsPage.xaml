@@ -3,12 +3,49 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:CellphoneProcessor.Create"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
+      Foreground="White" IsEnabled="{Binding PageEnabled}"
       Title="CreateTripsPage">
-
+    <Page.DataContext>
+        <local:CreateTripsViewModel />
+    </Page.DataContext>
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="AUTO" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="AUTO" />
+        </Grid.ColumnDefinitions>
+        <!-- StaysPath  -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Stays File" />
+        <TextBox   Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding StaysFilePath}" />
+        <ui:Button Grid.Row="0" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24"
+                   Click="StaysFilePath_Click" ToolTip="Select the Stays File to read." />
+        <!-- Hourly Offset -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="GMT Hourly offset" />
+        <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="5" IntegersOnly="True" Value="{Binding HourlyOffset}" ToolTip="The offset compared to GMT for the data." />
+        <!-- Output Path -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="Output File" />
+        <TextBox   Grid.Row="2" Grid.Column="1" Margin="5" Text="{Binding OutputPath}" />
+        <ui:Button Grid.Row="2" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24"
+                   Click="OutputFilePath_Click" ToolTip="The path to save the trips file to." />
+        <!-- Run Button -->
+        <ui:Button Grid.Row="3" Grid.Column="2" Margin="5" IsEnabled="{Binding CanRun, Mode=OneWay}"
+                   Style="{StaticResource RunButton}" ToolTip="Create the trips."
+                   Click="StartRun_Click"/>
+        <!-- Progress Bars -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Margin="5" Text="Progress" />
+        <ProgressBar Grid.Row="4" Grid.Column="1" Minimum="0" Margin="5"
+                     Maximum="{Binding ProgressTotal, Mode=OneWay}" 
+                     Value="{Binding ProgressCurrent, Mode=OneWay}" />
     </Grid>
 </Page>

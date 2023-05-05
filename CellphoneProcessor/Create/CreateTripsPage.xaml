@@ -32,7 +32,10 @@
                    Click="StaysFilePath_Click" ToolTip="Select the Stays File to read." />
         <!-- Hourly Offset -->
         <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="GMT Hourly offset" VerticalAlignment="Center"/>
-        <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="5" IntegersOnly="True" Value="{Binding HourlyOffset}" ToolTip="The offset compared to GMT for the data." />
+        <ui:NumberBox Grid.Row="1" Grid.Column="1" Margin="5" IntegersOnly="True" 
+                      Min="-11"
+                      Max="11"
+                      Text="{Binding HourlyTextOffset}" ToolTip="The offset compared to GMT for the data." />
         <!-- Output Path -->
         <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="Output File" VerticalAlignment="Center"/>
         <TextBox   Grid.Row="2" Grid.Column="1" Margin="5" Text="{Binding OutputPath}" />

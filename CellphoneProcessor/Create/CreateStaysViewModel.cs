@@ -247,6 +247,7 @@ public sealed class CreateStaysViewModel : INotifyPropertyChanged
         }
         _isRunning = true;
         PageEnabled = false;
+        UpdateConfig();
         try
         {
             ProgressUpdate chunkingProgress = new();
@@ -309,6 +310,16 @@ public sealed class CreateStaysViewModel : INotifyPropertyChanged
             _isRunning = false;
             PageEnabled = true;
         }
+    }
+
+    private void UpdateConfig()
+    {
+        var parameters = Configuration.Shared.GetParameters(nameof(CreateStaysViewModel));
+        parameters[nameof(ShapeFile)] = ShapeFile;
+        parameters[nameof(ChunkFolder)] = ChunkFolder;
+        parameters[nameof(TAZColumn)] = TAZColumn;
+        parameters[nameof(RoadNetwork)] = RoadNetwork;
+        Configuration.Shared.Save();
     }
 
     /// <summary>

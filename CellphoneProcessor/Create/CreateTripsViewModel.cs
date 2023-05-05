@@ -48,13 +48,24 @@ internal sealed class CreateTripsViewModel : INotifyPropertyChanged
         }
     }
 
-    public int HourlyOffset
+    public double HourlyOffset
     {
         get => _hourlyOffset;
         set
         {
             _hourlyOffset = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HourlyOffset)));
+        }
+    }
+
+    public string HourlyTextOffset
+    {
+        get => _hourlyOffset.ToString();
+        set
+        {
+            double.TryParse(value, out _hourlyOffset);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HourlyOffset)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HourlyTextOffset)));
         }
     }
 
@@ -89,6 +100,26 @@ internal sealed class CreateTripsViewModel : INotifyPropertyChanged
         }
     }
 
+    public CreateTripsViewModel()
+    {
+        var parameters = Configuration.Shared.GetParameters(nameof(CreateTripsViewModel));
+        string hourly = "0";
+        Configuration.TryUpdateValue(parameters, nameof(StaysFilePath), ref _staysFilePath);
+        Configuration.TryUpdateValue(parameters, nameof(OutputPath), ref _outputPath);
+        Configuration.TryUpdateValue(parameters, nameof(HourlyOffset), ref hourly);
+        _ = double.TryParse(hourly, out _hourlyOffset);
+        UpdateCanRun();
+    }
+
+    private void UpdateConfiguration()
+    {
+        var parameters = Configuration.Shared.GetParameters(nameof(CreateTripsViewModel));
+        parameters[nameof(StaysFilePath)] = StaysFilePath;
+        parameters[nameof(OutputPath)] = OutputPath;
+        parameters[nameof(HourlyOffset)] = HourlyOffset.ToString();
+        Configuration.Shared.Save();
+    }
+
     public async Task CreateTripsAsync()
     {
         PageEnabled = false;
@@ -109,7 +140,8 @@ internal sealed class CreateTripsViewModel : INotifyPropertyChanged
                             break;
                     }
                 };
-                CreateTrips.Run(StaysFilePath, OutputPath, HourlyOffset, updater);
+                UpdateConfiguration();
+                CreateTrips.Run(StaysFilePath, OutputPath, (int)HourlyOffset, updater);
             });
         }
         finally
@@ -125,7 +157,7 @@ internal sealed class CreateTripsViewModel : INotifyPropertyChanged
     private bool _pageEnabled = true;
     private double _progressCurrent = 0.0;
     private double _progressTotal = 0.0;
-    private int _hourlyOffset;
+    private double _hourlyOffset;
     #endregion
 
     public event PropertyChangedEventHandler? PropertyChanged;

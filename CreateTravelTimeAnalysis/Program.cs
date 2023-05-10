@@ -1,8 +1,10 @@
 ﻿string recordsPath = args.Length > 0 ? args[0] : @"Z:\Groups\TMG\Research\2022\CAF\Bogota\Days\ProcessedRoadTimes-WithTAZ.csv";
 string outputPath = args.Length > 0 ? args[1] : @"Z:\Groups\TMG\Research\2022\CAF\Bogota\Days\Distances";
+var hourlyOffset = args.Length > 0 ? int.Parse(args[2]) : -3;
 
 //var hourlyOffset = -3; // BuenosAires
-var hourlyOffset = -5; // Bogota + Panama
+//var hourlyOffset = -5; // Bogota + Panama
+
 
 // Weekday = 0, Weekend = 1, 200 500m bins.
 var distanceBins = new long[][]

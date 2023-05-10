@@ -1,8 +1,18 @@
 ﻿using RoadNetwork;
 
-var networkFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\BuenosAires.osmx";
-var surveyFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\SurveyTrips.csv";
-var outputFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\SurveyTravelTimes.csv";
+// var networkFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\BuenosAires.osmx";
+// var surveyFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\SurveyTrips.csv";
+// var outputFilePath = @"Z:\Groups\TMG\Research\2022\CAF\BuenosAires\SurveyTravelTimes.csv";
+
+if(args.Length < 3)
+{
+    Console.WriteLine("Usage: [NetworkFilePath] [SurveyFilePath] [OutputFilePath]");
+    return;
+}
+
+var networkFilePath = args[0];
+var surveyFilePath  = args[1];
+var outputFilePath = args[2];
 
 Console.WriteLine("Loading Road Network...");
 Network network = new(networkFilePath);

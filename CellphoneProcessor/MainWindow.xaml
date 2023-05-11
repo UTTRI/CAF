@@ -68,6 +68,12 @@
                     Icon="VehicleSubway24"
                     PageType="{x:Type ct:AppendTransitTimes}"
                     PageTag="CreateFeatures" />
+				<ui:NavigationItem x:Name="ComputeHomeLocation"
+                    Content="Compute Home Location"
+                    ToolTip="Compute Home Location"
+                    Icon="Home24"
+                    PageType="{x:Type ct:CreateHomeLocationPage}"
+                    PageTag="CreateHomeLocation" />
                 <ui:NavigationItem x:Name="CompareTrips"
                     Content="Compare Trips"
                     ToolTip="Compare Trips"

@@ -1,0 +1,56 @@
+﻿<Page x:Class="CellphoneProcessor.Create.CreateHomeLocationPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:CellphoneProcessor.Create"
+      mc:Ignorable="d" Foreground="White" IsEnabled="{Binding PageEnabled}"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Create Home Location Page">
+    <Page.DataContext>
+        <local:CreateHomeLocationViewModel />
+    </Page.DataContext>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="AUTO"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="AUTO"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+            <RowDefinition Height="AUTO" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Grid.Column="0" Margin="5" Text="Stays File" VerticalAlignment="Center" />
+        <TextBox   Grid.Row="0" Grid.Column="1" Margin="5" Text="{Binding StaysFilePath}" />
+        <ui:Button Grid.Row="0" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="StaysFile_Click" ToolTip="Select the stays file." />
+        <!-- Shape file -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Margin="5" Text="ShapeFile" VerticalAlignment="Center"/>
+        <TextBox   Grid.Row="1" Grid.Column="1" Margin="5" Text="{Binding ShapeFilePath}" />
+        <ui:Button Grid.Row="1" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}" Icon="Folder24" Click="ShapeFile_Click" ToolTip="Select the Shape File."/>
+        <!-- TAZ Column -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Margin="5" Text="TAZ Column" />
+        <ComboBox Grid.Row="2" Grid.Column="1" Margin="5" 
+                  x:Name="Box"
+                  ItemsSource="{Binding ShapeFileColumns, Mode=OneWay}"
+                  SelectedValue="{Binding TAZName}"/>
+        <!-- Output File location -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Margin="5" Text="Output Location" />
+        <TextBox Grid.Row="3" Grid.Column="1" Margin="5" Text="{Binding OutputPath}"/>
+        <ui:Button Grid.Row="3" Grid.Column="2" Margin="5" Style="{StaticResource RunButton}"
+                   Icon="Folder24" Click="OutputFile_Click"/>
+        <!-- Run Button -->
+        <ui:Button Grid.Row="4" Grid.Column="2" IsEnabled="{Binding ReadyToRun, Mode=OneWay}"
+                   Style="{StaticResource RunButton}" ToolTip="Create the home locations."
+                   Click="StartRun_Click"/>
+        <!-- Progress Bars -->
+        <TextBlock Grid.Row="5" Grid.Column="0" Margin="5" Text="Progress" VerticalAlignment="Center" />
+        <ProgressBar Grid.Row="5" Grid.Column="1" Margin="5" Minimum="0" 
+                     Maximum="{Binding ProgressTotal, Mode=OneWay}"
+                     Value="{Binding ProgressCurrent, Mode=OneWay}"/>
+    </Grid>
+</Page>

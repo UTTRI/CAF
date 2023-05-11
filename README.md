@@ -47,28 +47,6 @@ Or
 
 > AddRoadtimesToSurvey.exe [NetworkFilePath.osmx] [SurveyTrips.csv] [RoadLoSResults.csv]
 
-### Create Demand Matrices
-
-This project is designed to take in trip records and generate Road Distances, Road Times, and cluster gap times broken down
-by weekend and weekday time periods.  The program takes in three parameters:
-
-1. RecordsPath - The location of the TripRecords to load in.
-1. OutputPath - The location of the directory to store all of the CSV files to.
-1. HourlyOffset - The GMT offset to apply when computing weather a record is done during the weekend or weekday.  e.g. Bogota and Panama are -5, and Buenbos Aires is -3.
-
-#### Building
-
-To build this project you will need to have the .Net 7 SDK installed.  This program should be able to be compiled and run
-on any operating system that supports .Net 7, not just Windows.
-
-> dotnet build -c Release
-
-#### Running
-
-To run the software after compiling it, you can execute the command:
-
-> dotnet run -c Release [RecordsPath] [OutputPath] [HourlyOffset]
-
 ### CellphoneProcessor
 
 This software is designed to automate the downloading and initial chunking of the cellphone records,
@@ -100,3 +78,43 @@ In order to generate the level of service variables for mode choice imputation w
 to connect to that will generate the paths through the network.  For our implementation we used OPT version 1.4. However
 when we found that the code is also compatible with OTP 2.2 though the results that it generated were different from the
 1.4 implementation.
+
+
+### Compute Congested Matrices
+
+This project was developed with the hope that we might be able to generated congested road networks to gather level of service
+information to feed into the mode choice model.
+
+#### Building
+
+To build this project you will need to have the .Net 7 SDK installed.  This program should be able to be compiled and run
+on any operating system that supports .Net 7, not just Windows.
+
+> dotnet build -c Release
+
+#### Running
+
+This project was never completed.
+
+### Create Demand Matrices
+
+This project is designed to take in trip records and generate Road Distances, Road Times, and cluster gap times broken down
+by weekend and weekday time periods.  The program takes in three parameters:
+
+1. RecordsPath - The location of the TripRecords to load in.
+1. OutputPath - The location of the directory to store all of the CSV files to.
+1. HourlyOffset - The GMT offset to apply when computing weather a record is done during the weekend or weekday.  e.g. Bogota and Panama are -5, and Buenbos Aires is -3.
+
+#### Building
+
+To build this project you will need to have the .Net 7 SDK installed.  This program should be able to be compiled and run
+on any operating system that supports .Net 7, not just Windows.
+
+> dotnet build -c Release
+
+#### Running
+
+To run the software after compiling it, you can execute the command:
+
+> dotnet run -c Release [RecordsPath] [OutputPath] [HourlyOffset]
+

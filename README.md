@@ -162,3 +162,55 @@ the cellphone
 1. Train the model against the survey dataset
 1. Impute the mode choices against the cellphone dataset
 1. Generates resulting statistics
+
+### Excel files for mode imputation models
+
+#### Bogota_SurveyProcessing_ForModel_VF
+
+This file processes the Bogota Mobility Survey and other external data in order to generate the 
+features to train the mode imputation model using data from Bogota.
+
+1. ViajesEODH2019: copy of the survey 'trips' file
+1. PopByZone: Population by traffic zone
+2. Road_TimeDist: Road distance and time between zones
+3. ZAT_Area: Area by zone
+4. ZAT_employment: estimates the number of establishments by traffic zone using the data from Ideca
+5. Modes_equiv: final equivalence for each studied travel mode
+6. Trips_Consol: combines the previous sheets into a single dataset
+7. Bogota_SurveyDB_Model_2c: final sheet to be saved as the csv file that feeds the model.
+
+#### BA_SurveyProcessing_ForModel_VF
+
+This file processes the Buenos Aires Mobility Survey and other external data in order to generate the 
+features to train the mode imputation model using data from Buenos Aires.
+
+1. Zone_attrib: attributes for each zone (area, population)
+1. viajes: copy of the survey's 'trips' file
+4. employment: number of establishments by zone estimated after geoprocessing data from 'Datos Abiertos de Desarrollo Productivo'
+5. Modes_equiv: final equivalence for each studied travel mode
+6. Trips_Consol: combines the previous sheets into a single dataset
+7. BA_SurveyDB_Model_2: final sheet to be saved as the csv file that feeds the model.
+
+#### Panama_Data_Consol
+This file summarizes the data for Panama City in order to generate a single file having all the attributes by zone.
+1. PAN_Zon_Shape: features presented in the Panama zoning shapefile
+1. Pop_PAN: Population
+4. Employm: Employment data and number of establishments by zone computed using the rations estimated from the Buenos Aires data
+5. PAN_Attributes_Zones: Summary of the attributes for each zone
+
+### CSV files for mode imputation models
+
+####  Bogota_SurveyDB_Model_2c
+Final csv file used to train the Bogota model, derived from the "Bogota_SurveyProcessing_ForModel_VF" file.
+
+####  BA_SurveyDB_Model_2
+Final csv file used to train the Buenos Aires model, derived from the "BA_SurveyProcessing_ForModel_VF" file.
+
+####  BGTA_Attributes_TAZ_ToGPS_O
+File with the attributes for each zone in Bogota.
+
+####  BA_Attributes_Zones2
+File with the attributes for each zone in Buenos Aires.
+
+####  PAN_Attributes_Zones
+File with the attributes for each zone in Panama City.

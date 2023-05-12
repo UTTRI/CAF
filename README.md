@@ -79,6 +79,8 @@ to connect to that will generate the paths through the network.  For our impleme
 when we found that the code is also compatible with OTP 2.2 though the results that it generated were different from the
 1.4 implementation.
 
+You can download OPT 1.4 from [here](https://repo1.maven.org/maven2/org/opentripplanner/otp/1.4.0/otp-1.4.0-shaded.jar).
+
 
 ### Compute Congested Matrices
 
@@ -118,3 +120,45 @@ To run the software after compiling it, you can execute the command:
 
 > dotnet run -c Release [RecordsPath] [OutputPath] [HourlyOffset]
 
+### Jupyter Notebooks
+
+There are several Jupyter Notebooks that are used for preparing the final
+datasets and to train the mode choice models.
+The code was tested with Python version 3.9. 
+In order to run the workbooks you will need to have the following modules installed:
+
+* matplotlib
+* sklearn
+* numpy
+* pandas
+* geopandas
+* contextily
+* shap
+* tensorflow
+ 
+#### CAF_GPS_Bogota_prepare_for_model
+
+This workbook combines the cellphone trips with other datasets in order to generate
+the features that will be fed into the mode choice imputation model.  The steps that
+the program follow are in order:
+
+1. Load the trip records with transit records attached
+1. Load in the transit stops contained within each TAZ
+1. Load in the home locations for each device
+1. Load in economic and density data for each TAZ
+1. Merge the columns together
+1. Add columns if the origin or destination of the trip
+is in the home TAZ
+1. Output the final features file to disk.
+
+#### CAF_mode_imputation_on_X_GPS
+
+This file is setup to evaluate the Buenos Aries mode choice model against
+the cellphone 
+
+1. Read in the features from file
+1. Map the names of the columns to a common list of names
+1. Loads in the survey
+1. Train the model against the survey dataset
+1. Impute the mode choices against the cellphone dataset
+1. Generates resulting statistics
